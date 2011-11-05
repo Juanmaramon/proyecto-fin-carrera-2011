@@ -130,7 +130,11 @@ void cMaterial::PrepareRender() {
 	cMatrix lWVPMatrix = cGraphicManager::Get().GetWVPMatrix();
 	lpEffect->SetParam("worldViewProj", lWVPMatrix );
 	cMatrix lWorldMatrix = cGraphicManager::Get().GetWorldMatrix();
+	cMatrix lWorldInverseTranposeMatrix = cGraphicManager::Get().GetWorldMatrix();
+	lWorldInverseTranposeMatrix.Invert();
+	lWorldInverseTranposeMatrix.Transpose();
 	lpEffect->SetParam("World", lWorldMatrix );
+	lpEffect->SetParam("worldInverseTranspose", lWorldInverseTranposeMatrix );
 	cCamera * lpCamera = cGraphicManager::Get().GetActiveCamera();
 	cVec3 lCameraPos = lpCamera->GetView().GetPosition();
 	lpEffect->SetParam("cameraPos", lCameraPos );
