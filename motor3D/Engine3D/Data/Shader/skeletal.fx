@@ -6,7 +6,7 @@
 #define MAX_BONES 80
 uniform float4 BonesRow[ MAX_BONES * 3 ];
 float4x4 worldViewProj;
-float4x4 world : World;
+float4x4 world;
 float4x4 worldInverseTranspose;
 
 // Direccion de la luz

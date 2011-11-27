@@ -52,6 +52,7 @@ class cGraphicManager : public cSingleton<cGraphicManager>
 	  // Get world view proyection matrix
 	  const cMatrix &GetWVPMatrix() { return mWVPMatrix; }
 
+	  // Get world matrix
 	  const cMatrix &GetWorldMatrix() { return mWorldMatrix; }
 
 	  friend class cSingleton<cGraphicManager>;

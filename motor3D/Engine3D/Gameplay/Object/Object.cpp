@@ -11,6 +11,7 @@ void cObject::Init()
 	mWorldMatrix.LoadIdentity();
 	mMeshHandles.resize(0);
 	mMaterialHandles.resize(0);
+
 }
 
 void cObject::AddMesh( cResourceHandle lMeshHandle, cResourceHandle lMaterialHandle ) 
@@ -21,6 +22,7 @@ void cObject::AddMesh( cResourceHandle lMeshHandle, cResourceHandle lMaterialHan
 
 void cObject::Render()
 {
+	cMatrix lWorldMatrix;
 	// Set World Matrix
 	cGraphicManager::Get().SetWorldMatrix(mWorldMatrix);
 	for (unsigned luiIndex = 0; luiIndex < mMeshHandles.size(); ++luiIndex){
@@ -39,8 +41,11 @@ void cObject::Render()
 			lpMesh->RenderMesh();
 			// Prepare the next pass
 			lbContinue = lpMaterial->SetNextPass();
-		}
+		}	
 	}
+	// Restore the world matrix
+	lWorldMatrix.LoadIdentity();
+	cGraphicManager::Get().SetWorldMatrix(lWorldMatrix);
 }
 
 // 
@@ -50,4 +55,3 @@ void cObject::Update( float lfTimestep ){
 		lpMesh->Update(lfTimestep);
 	}
 }
-

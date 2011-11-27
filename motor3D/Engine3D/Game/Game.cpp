@@ -12,6 +12,10 @@
 #include "..\Graphics\Effects\EffectManager.h"
 #include "..\Graphics\Skeletal\cSkeletalManager.h"
 #include "..\Graphics\Skeletal\cSkeletalMesh.h"
+#include "..\Character\CharacterManager.h"
+#include "..\Character\Behaviour\BehaviourManager.h"
+#include "..\Lua\LuaFunctions.h"
+#include "..\LuaManager\cLuaManager.h"
 
 //Para configurar el InputManager hay que llamar a su Init (en cGame::Init)
 //pasándole la tabla kaActionMapping (de InputConfiguration.cpp).
@@ -41,13 +45,31 @@ bool cGame::Init()
 			// Init Camera 3D
 			m3DCamera.Init();  
 			float lfAspect = (float)mProperties.muiWidth/(float)mProperties.muiHeight;
-			m3DCamera.SetPerspective(45.0f, lfAspect,0.1f,100.0f);
+			m3DCamera.SetPerspective(45.0f, lfAspect,0.1f,1000.0f);
 			//Se pone la cámara en la posición (5,5,5) de nuestro mundo,
 			// apuntando al origen del mismo, e indicando que el vector UP de la cámara apunta hacia arriba.
 			//m3DCamera.SetLookAt( cVec3(5.0f, 5.f, 5.f), cVec3(0.0f, 0.f, 0.f), cVec3(0.0f, 1.f, 0.f) );		
 
 			//Se aleja la cámara para ver bien la escena que vamos a cargar posteriormente.
-			m3DCamera.SetLookAt( cVec3(15.f, 15.f, 15.f),cVec3(0.0f, 0.f, 0.f), cVec3(0.0f, 1.f, 0.f) );
+			//m3DCamera.SetLookAt( cVec3(5.f, 4.3f, 5.f),cVec3(0.f, 0.f, 0.f), cVec3(0.0f, 1.f, 0.f) );
+			m3DCamera.SetLookAt( cVec3(0.f, 1.5f, 20.f),cVec3(0.f, 1.5f, 0.f), cVec3(0.0f, 1.f, 0.f) );
+
+
+			//Se inicializa la clase que contendrá la lista de personajes.
+			lbResult = cCharacterManager::Get().Init();
+			//Se inicializa la clase que contendrá los comportamientos de los personajes.
+			lbResult = lbResult && cBehaviourManager::Get().Init();
+			if (lbResult)
+			{
+				//Se inicializa Lua.
+				cLuaManager::Get().Init();
+				//Se registran las funciones C++ para usar desde Lua.
+				RegisterLuaFunctions();
+				//Cargamos el fichero de script
+				cLuaManager::Get().DoFile("Data/Scripts/character.lua");
+				cCharacterManager::Get().DebugCharacter();
+				//cLuaManager::Get().DoFile("Data/Scripts/patrol.lua");
+			}
 
 			//Se inicializa la clase cInputManager que representa el gestor de entrada (keyboard, gamepad, mouse, ...).
 			//Se le pasa la tabla "kaActionMapping" (de InputConfiguration.cpp) que indica la relación entre las acciones y los dispositivos.
@@ -58,7 +80,13 @@ bool cGame::Init()
 			cPhysics::Get().Init();
 
 			//Se inicializa la clase que gestiona la texturas indicando que habrá 1, por ejemplo.
-			cTextureManager::Get().Init(10);
+			cTextureManager::Get().Init(20);
+
+			// Terrain object
+			//mTerrain.initialize();
+
+			if (!mHeightmap.Load()) OutputDebugString("Heightmap terrain load error!");
+			/*mTerrain.Init();*/
 
 			//Se inicializa la clase que gestiona los materiales.
 			cMaterialManager::Get().Init(10);
@@ -87,10 +115,12 @@ bool cGame::Init()
 			cMeshManager::Get().Init(5);
 
 			//Se inicializa el gestor de escenas.
-			cSceneManager::Get().Init(10);         
+			cSceneManager::Get().Init(10);   
 
 			//Se carga la escena.
-			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/dragonsmall.DAE" ); 		
+			//mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/dragonsmall.DAE" ); 		
+			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/duck_triangulate.dae" ); 
+			//mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/plane.DAE" );
 
 			// Physics object in the game
 			cPhysicObject mModelObject = *((cPhysicObject*) ((cScene *)mScene.GetResource())->getSubObject( 0 ));
@@ -98,7 +128,7 @@ bool cGame::Init()
 			cMatrix lScaleMatrix, lOffsetMatrix;
 
 			// Preparamos ya la escala y el offset que usaran el resto de objetos
-			lScaleMatrix.LoadScale( 1.0f);
+			lScaleMatrix.LoadScale( .02f );
 			lOffsetMatrix.LoadTranslation( cVec3( 0.0f, 0.0f, 0.0f ) );
 			// Inicializamos el modelo de esfera
 			mSphereModel.InitSphere( 1.0f, 2.0f );
@@ -111,7 +141,7 @@ bool cGame::Init()
 				lSphereObject.SetScaleMatrix( lScaleMatrix );
 				lSphereObject.SetDrawOffsetMatrix( lOffsetMatrix );
 				lSphereObject.CreatePhysics( &mSphereModel );
-			}
+			}	
 
 			cSkeletalManager::Get().Init(5);
 			// Inits skeleton model
@@ -130,21 +160,22 @@ bool cGame::Init()
 			cResourceHandle lMaterial = cMaterialManager::Get().LoadResource("Skeleton", "./Data/Material/SkeletonMaterial.xml");
 		
 			assert(lMaterial.IsValidHandle());
-			mObject.AddMesh(mSkeletalMesh, lMaterial);
+			mObject.AddMesh(mSkeletalMesh, lMaterial);	
 			cMatrix lMatrix;
 			lMatrix.LoadScale(0.01f);
-			mObject.SetWorldMatrix(lMatrix);
+			mObject.SetWorldMatrix(lMatrix);	
 
 			mBoxModel.InitBox( 0.0f, cVec3( 0.3f, 1.0f, 0.3f ) );
 			mObject.CreatePhysics( &mBoxModel );
 			lScaleMatrix.LoadScale(0.01f);
 			mObject.SetScaleMatrix( lScaleMatrix );
 
+			cMatrix lRotateMatrix;
 			lOffsetMatrix.LoadTranslation( cVec3( 0.0f, -1.0f, 0.0f ) );
-			mObject.SetDrawOffsetMatrix( lOffsetMatrix );
+			lRotateMatrix.LoadRotation( cVec3( 0.f, 1.f, 0.f ), 329.9f );
+			mObject.SetDrawOffsetMatrix( lOffsetMatrix * lRotateMatrix );
 			mObject.SetKinematic( );
-			mObject.SetPosition( cVec3( 1.0f, 1.0f, 0.0f ) );
-
+			mObject.SetPosition( cVec3( 0.0f, 0.0f, 0.0f ) );
 		}		
 		else
 		{
@@ -161,7 +192,7 @@ bool cGame::Init()
 
 //Función para actualizar el juego.
 void cGame::Update( float lfTimestep )
-{
+{ 			
 	//Se actualiza la ventana:
 	cWindow::Get().Update();
 
@@ -182,17 +213,40 @@ void cGame::Update( float lfTimestep )
 	bool lbmoveLeft = IsPressed( eIA_MoveLeft );
 	bool lbmoveRight = IsPressed( eIA_MoveRight );
 
+	cMatrix lOffsetMatrix, lRotateOffset, lTranslateOffset;
+	cVec3 lCamaraPos;
+	lOffsetMatrix.LoadIdentity();
+	lRotateOffset.LoadIdentity();
+	lTranslateOffset.LoadIdentity();
+	lCamaraPos = m3DCamera.GetPosition();
 
 	if ( lbmoveFront ) {
-		mObject.SetPosition( mObject.GetPosition( ) + cVec3(-0.1f, 0.0f, 0.0f ) );
+		mObject.SetPosition( mObject.GetPosition( ) + cVec3( 0.0f, 0.0f, -1.f ) );
+		lCamaraPos.z += 1.f;
+		m3DCamera.SetView(lCamaraPos);
 	}else if ( lbmoveBack  ) {
-		mObject.SetPosition( mObject.GetPosition( ) + cVec3( 0.1f, 0.0f, 0.0f ) );
+		lCamaraPos.z -= 1.f;
+		m3DCamera.SetView(lCamaraPos);
+		mObject.SetPosition( mObject.GetPosition( ) + cVec3( 0.0f, 0.0f, 1.f ) );
 	}
 	if ( lbmoveLeft  ) {
-		mObject.SetPosition( mObject.GetPosition( ) + cVec3( 0.0f, 0.0f, 0.1f ) );
+		lCamaraPos.x -= -1.f;
+		//lOffsetMatrix.LoadRotation( cVec3( 0.f, 1.f, 0.f ), 0.01f );
+		 m3DCamera.SetView(lCamaraPos);
+		//lTranslateOffset.LoadTranslation(cVec3(-0.1f, 0.0f, 0.0f ));
+		mObject.SetPosition( mObject.GetPosition( ) + cVec3(-1.f, 0.0f, 0.0f ) );
+		
 	}else if ( lbmoveRight  ) {
-		mObject.SetPosition( mObject.GetPosition( ) + cVec3( 0.0f, 0.0f, -0.1f ) );
+		//lTranslateOffset.LoadTranslation(cVec3(0.1f, 0.0f, 0.0f ));
+		//lOffsetMatrix.LoadRotation( cVec3( 0.f, 1.f, 0.f ), -0.01f );
+		lCamaraPos.x -= 1.f;
+		m3DCamera.SetView(lCamaraPos);
+		mObject.SetPosition( mObject.GetPosition( ) + cVec3( 1.f, 0.0f, 0.0f ) );
 	}
+	mObject.SetDrawOffsetMatrix(mObject.GetDrawOffsetMatrix() * (lTranslateOffset * lOffsetMatrix));
+
+	//Se actualizan los personajes:
+	cCharacterManager::Get().Update(lfTimestep);
 
 	// Update bullet physics object
 	cPhysics::Get().Update(lfTimestep);
@@ -278,10 +332,11 @@ void cGame::Render()
 	cMatrix lWorld;
 	lWorld.LoadIdentity();
 	cGraphicManager::Get().SetWorldMatrix(lWorld);
+
 	// Render the debug lines
 	cGraphicManager::Get().DrawGrid();
 	cGraphicManager::Get().DrawAxis();
-	 
+
 	cGraphicManager::Get().DrawPoint( cVec3(1.5f, 0.0f, 1.5f), cVec3(1.0f, 0.0f, 1.0f) );
 	cGraphicManager::Get().DrawLine( cVec3(-1.5f, 0.0f, -1.5f), cVec3(-1.5f, 0.0f, 1.5f), cVec3(1.0f, 1.0f, 0.0f) );
 
@@ -291,23 +346,30 @@ void cGame::Render()
 	//((cScene *)mScene.GetResource())->Render();
 //	glEnable(GL_TEXTURE_2D);
 
+	// Display the terrain mesh.
+	mHeightmap.Render();
+
+	//Se dibujan los personajes:
+	cCharacterManager::Get().Render();
+
 	// 3.1) Render of the skeleton mesh
 	// -------------------------------------------------------------
 	mObject.Render();
 	cSkeletalMesh* lpSkeletonMesh = (cSkeletalMesh*)mSkeletalMesh.GetResource();
-	lpSkeletonMesh->RenderSkeleton();
+	lpSkeletonMesh->RenderSkeleton();	
 
 	// 4.0) Draws debug info of bullet
-	cPhysics::Get().Render();
+	cPhysics::Get().Render();	
 
 	// Render physic objects
 	for ( unsigned int luiIndex = 0; luiIndex < 10; ++luiIndex) {
-		maSphereObjects[luiIndex].Render();
-	}
+		maSphereObjects[luiIndex].Render();	
+	}		
 	 
 	// 4) Renderizado de Geometría 3D con transparencia
 	// -------------------------------------------------------------
-	 
+
+
 	// 5) Activación de Cámara 2D  
 	// -------------------------------------------------------------
 	cGraphicManager::Get().ActivateCamera( &m2DCamera );
@@ -351,16 +413,28 @@ bool cGame::Deinit()
 	//Se libera el manejador de mallas.
 	cMeshManager::Get().Deinit();
 
+	//Deinicializamos Lua
+	cLuaManager::Get().Deinit();
+	//Se libera la clase que contiene la lista de personajes:
+	bool lbResult =  cCharacterManager::Get().Deinit();
+	//Se libera la clase que contiene la lista de comportamientos:
+	lbResult = lbResult && cBehaviourManager::Get().Deinit();	
+
 	//Se libera la clase fuente.
 	mFont.Deinit();
+
     //Se libera el gestor de texturas.
 	cTextureManager::Get().Deinit();  
+	// Deinitialization of terrain
+	mHeightmap.Deinit();
+	//mTerrain.~Terrain();
+
 	// Deinitialization of physics object 
 	cPhysics::Get().Deinit();
 	//Se libera el InputManager:
 	cInputManager::Get().Deinit();
 	//Se libera OpenGL (clase cGraphicManager):
-	bool lbResult = cGraphicManager::Get().Deinit();
+	lbResult = cGraphicManager::Get().Deinit();
 	//Se libera la ventana:
 	lbResult = lbResult && cWindow::Get().Deinit();
 	return lbResult;	
