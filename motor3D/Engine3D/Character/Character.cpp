@@ -68,6 +68,9 @@ void cCharacter::Render()
 		bool lbOk = cLuaManager::Get().CallLua( "DrawPath", miId, (int *) NULL);
 		assert( lbOk );//Se comprueba si la llamada a la función se ha producido satisfactoriamente						
 	}
+	lWorld.LoadIdentity();
+	//Reestablecer la matriz de World
+	cGraphicManager::Get().SetWorldMatrix(lWorld);
 }
 
 //Método que establece el atributo de la posición del personaje

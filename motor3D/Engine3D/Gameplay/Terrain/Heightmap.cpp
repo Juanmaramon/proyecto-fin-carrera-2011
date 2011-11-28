@@ -86,7 +86,7 @@ static btVector3 getUpVector(int upAxis, btScalar regularValue, btScalar upValue
 
 bool Heightmap::Load(){
 	//Raw file
-	if(!LoadRawFile			("./Data/Scene/images/terrain1.raw", MAP_SIZE*MAP_SIZE))	return false;
+	if(!LoadRawFile			("./Data/Scene/images/terrain.raw", MAP_SIZE*MAP_SIZE))	return false;
 	
 	//Texture 1
 	tex_floor = cTextureManager::Get().LoadResource("terrain", "./Data/Scene/images/sand.tga"); 
@@ -106,22 +106,22 @@ bool Heightmap::Load(){
 	//Create display list
 	Create(minHeight, maxHeight);
 
-/*	for (int i = 0; i <= BULLET_MAP_SIZE; i++ ){
-		for (int j = 0; j <= BULLET_MAP_SIZE; j++ ){
+	for (int i = 0; i < BULLET_MAP_SIZE; i++ ){
+		for (int j = 0; j < BULLET_MAP_SIZE; j++ ){
 			smallHeightMap[ i + (j * BULLET_MAP_SIZE) ] = Height( i, j );
 		}
-	}*/
+	}
 
 	// Creates physics over the terrain data
 	bool flipQuadEdges = false;													// width, height, *heightmapData, scale, minHeight, maxHeight, upAxis, heightMapDatatype, flipQuadEdges 
 	int upAxis = 1;
 	//btHeightfieldTerrainShape * heightfieldShape = new btHeightfieldTerrainShape(MAP_SIZE, MAP_SIZE, HeightMap, s_gridHeightScale1, minHeight, maxHeight, upAxis, PHY_UCHAR, flipQuadEdges);
-	btHeightfieldTerrainShape * heightfieldShape = new btHeightfieldTerrainShape(BULLET_MAP_SIZE, BULLET_MAP_SIZE, HeightMap /*smallHeightMap*/, s_gridHeightScale1, minHeight, maxHeight, upAxis, PHY_UCHAR, flipQuadEdges);
+	btHeightfieldTerrainShape * heightfieldShape = new btHeightfieldTerrainShape(BULLET_MAP_SIZE, BULLET_MAP_SIZE, /*HeightMap*/ smallHeightMap, s_gridHeightScale1, minHeight, maxHeight, upAxis, PHY_UCHAR, flipQuadEdges);
 	assert(heightfieldShape);
 
 	// scale the shape
-//	btVector3 localScaling = getUpVector(upAxis, s_gridSpacing1, 1.0);
-//	heightfieldShape->setLocalScaling(localScaling);
+	//btVector3 localScaling = getUpVector(upAxis, s_gridSpacing1, 1.0);
+	//heightfieldShape->setLocalScaling(localScaling);
 
 	// stash this shape away
 	cPhysics::Get().getCollisionShapes().push_back(heightfieldShape);
@@ -130,7 +130,7 @@ bool Heightmap::Load(){
 	// create ground object
 	float mass = 0.0;
    
-	btRigidBody* body = cPhysics::Get().GetNewBody(heightfieldShape, mass, cVec3(0, -100, 0));	
+	btRigidBody* body = cPhysics::Get().GetNewBody(heightfieldShape, mass, cVec3(0, -200, 0));	
 
 	return true;
 }
@@ -296,7 +296,7 @@ void Heightmap::Render(){
 	glPushMatrix();
 //	glScalef(100.0f,100.0f,100.0f);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);	
-	glTranslatef(-BULLET_MAP_SIZE * 0.5f, -100.0f, -BULLET_MAP_SIZE * 0.5f); 
+	glTranslatef(-BULLET_MAP_SIZE * 0.5f, -200.0f, -BULLET_MAP_SIZE * 0.5f); 
 	glEnable(GL_TEXTURE_2D);
 	glCallList(disp_list_id);
 	glDisable(GL_TEXTURE_2D);

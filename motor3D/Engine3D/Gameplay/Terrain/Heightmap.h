@@ -8,10 +8,10 @@
 #include "..\..\Libraries\Bullet\include\BulletCollision\CollisionShapes\btHeightfieldTerrainShape.h"
 #include "..\..\Physics\cPhysics.h"
 
-#define MAP_SIZE	64	// This is the size of our .raw height map
+#define MAP_SIZE	1024	// This is the size of our .raw height map
 #define BULLET_MAP_SIZE	64	// This is the size of our .raw height map
 #define STEP_SIZE	8		// This is width and height of each QUAD
-static const float s_gridHeightScale1		= 0.2;
+static const float s_gridHeightScale1		= 1.0;
 static const float s_gridSpacing1		= 5.0;
 
 class Heightmap{

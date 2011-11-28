@@ -68,7 +68,7 @@ bool cGame::Init()
 				//Cargamos el fichero de script
 				cLuaManager::Get().DoFile("Data/Scripts/character.lua");
 				cCharacterManager::Get().DebugCharacter();
-				//cLuaManager::Get().DoFile("Data/Scripts/patrol.lua");
+				cLuaManager::Get().DoFile("Data/Scripts/patrol.lua");
 			}
 
 			//Se inicializa la clase cInputManager que representa el gestor de entrada (keyboard, gamepad, mouse, ...).
@@ -346,25 +346,27 @@ void cGame::Render()
 	//((cScene *)mScene.GetResource())->Render();
 //	glEnable(GL_TEXTURE_2D);
 
-	// Display the terrain mesh.
-	mHeightmap.Render();
 
 	//Se dibujan los personajes:
 	cCharacterManager::Get().Render();
 
-	// 3.1) Render of the skeleton mesh
-	// -------------------------------------------------------------
-	mObject.Render();
-	cSkeletalMesh* lpSkeletonMesh = (cSkeletalMesh*)mSkeletalMesh.GetResource();
-	lpSkeletonMesh->RenderSkeleton();	
-
-	// 4.0) Draws debug info of bullet
+	// 3.1) Draws debug info of bullet
 	cPhysics::Get().Render();	
+
+	// Display the terrain mesh.
+	mHeightmap.Render();
 
 	// Render physic objects
 	for ( unsigned int luiIndex = 0; luiIndex < 10; ++luiIndex) {
 		maSphereObjects[luiIndex].Render();	
 	}		
+
+	// 3.2) Render of the skeleton mesh
+	// -------------------------------------------------------------
+	mObject.Render();
+	cSkeletalMesh* lpSkeletonMesh = (cSkeletalMesh*)mSkeletalMesh.GetResource();
+	lpSkeletonMesh->RenderSkeleton();	
+
 	 
 	// 4) Renderizado de Geometría 3D con transparencia
 	// -------------------------------------------------------------
