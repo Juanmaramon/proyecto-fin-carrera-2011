@@ -1,5 +1,5 @@
 // MASTER DE CREACIÓN DE VIDEOJUEGOS UOC-ULL
-// Asignatura: Aplicación Práctica Avanzada de Videojuegos.
+// Asignatura: Proyecto Final - Mad Drive.
 // Octubre, 2011.
 // Juan Manuel Ramón Vigo.
 // Alberto Alfonso Gómez.
