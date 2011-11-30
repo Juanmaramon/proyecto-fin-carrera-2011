@@ -175,7 +175,7 @@ bool cGame::Init()
 			lRotateMatrix.LoadRotation( cVec3( 0.f, 1.f, 0.f ), 329.9f );
 			mObject.SetDrawOffsetMatrix( lOffsetMatrix * lRotateMatrix );
 			mObject.SetKinematic( );
-			mObject.SetPosition( cVec3( 0.0f, 0.0f, 0.0f ) );
+			mObject.SetPosition( cVec3( 0.0f, 0.0f, 15.0f ) );
 		}		
 		else
 		{
@@ -220,7 +220,7 @@ void cGame::Update( float lfTimestep )
 	lTranslateOffset.LoadIdentity();
 	lCamaraPos = m3DCamera.GetPosition();
 
-	if ( lbmoveFront ) {
+	/*if ( lbmoveFront ) {
 		mObject.SetPosition( mObject.GetPosition( ) + cVec3( 0.0f, 0.0f, -1.f ) );
 		lCamaraPos.z += 1.f;
 		m3DCamera.SetView(lCamaraPos);
@@ -228,22 +228,96 @@ void cGame::Update( float lfTimestep )
 		lCamaraPos.z -= 1.f;
 		m3DCamera.SetView(lCamaraPos);
 		mObject.SetPosition( mObject.GetPosition( ) + cVec3( 0.0f, 0.0f, 1.f ) );
-	}
-	if ( lbmoveLeft  ) {
-		lCamaraPos.x -= -1.f;
-		//lOffsetMatrix.LoadRotation( cVec3( 0.f, 1.f, 0.f ), 0.01f );
-		 m3DCamera.SetView(lCamaraPos);
-		//lTranslateOffset.LoadTranslation(cVec3(-0.1f, 0.0f, 0.0f ));
-		mObject.SetPosition( mObject.GetPosition( ) + cVec3(-1.f, 0.0f, 0.0f ) );
-		
-	}else if ( lbmoveRight  ) {
-		//lTranslateOffset.LoadTranslation(cVec3(0.1f, 0.0f, 0.0f ));
-		//lOffsetMatrix.LoadRotation( cVec3( 0.f, 1.f, 0.f ), -0.01f );
-		lCamaraPos.x -= 1.f;
+	}*/
+	if ( lbmoveFront || lbmoveBack  ) {
+		float fVar = ( lbmoveFront ? 0.1f : -0.1f);
+		float x = mObject.GetDrawOffsetMatrix().rows[2].x * fVar;	
+		float z = mObject.GetDrawOffsetMatrix().rows[2].z * fVar;	
+        mObject.SetPosition( mObject.GetPosition() + cVec3( x , 0.0f, z ) );
+
+		//lCamaraPos.z += ( lbmoveFront ? 0.1f : -0.1f); 
+        lCamaraPos.z += fVar;		
 		m3DCamera.SetView(lCamaraPos);
-		mObject.SetPosition( mObject.GetPosition( ) + cVec3( 1.f, 0.0f, 0.0f ) );
 	}
+
+	if ( lbmoveLeft ) {
+		//lCamaraPos.x -= -1.f;
+		lOffsetMatrix.LoadRotation( cVec3( 0.f, 1.f, 0.f ), 0.01f );
+		 //m3DCamera.SetView(lCamaraPos);
+		//lTranslateOffset.LoadTranslation(cVec3(-0.1f, 0.0f, 0.0f ));
+		//mObject.SetPosition( mObject.GetPosition( ) + cVec3(-1.f, 0.0f, 0.0f ) );		
+
+		
+	}else if ( lbmoveRight ) {
+		//lTranslateOffset.LoadTranslation(cVec3(0.1f, 0.0f, 0.0f ));
+		lOffsetMatrix.LoadRotation( cVec3( 0.f, 1.f, 0.f ), -0.01f );
+		//lCamaraPos.x -= 1.f;
+		//m3DCamera.SetView(lCamaraPos);
+		//mObject.SetPosition( mObject.GetPosition( ) + cVec3( 1.f, 0.0f, 0.0f ) );
+	}
+	
+	cVec4 rows2[4];
+	rows2[0] = mObject.GetDrawOffsetMatrix().rows[0];
+	rows2[1] = mObject.GetDrawOffsetMatrix().rows[1];
+	rows2[2] = mObject.GetDrawOffsetMatrix().rows[2];
+	rows2[3] = mObject.GetDrawOffsetMatrix().rows[3];
 	mObject.SetDrawOffsetMatrix(mObject.GetDrawOffsetMatrix() * (lTranslateOffset * lOffsetMatrix));
+    rows2[0] = mObject.GetDrawOffsetMatrix().rows[0];
+	rows2[1] = mObject.GetDrawOffsetMatrix().rows[1];
+	rows2[2] = mObject.GetDrawOffsetMatrix().rows[2];
+	rows2[3] = mObject.GetDrawOffsetMatrix().rows[3];
+
+	if ( lbmoveLeft || lbmoveRight ) {
+		/*float fVar = (lbmoveLeft ? -0.05f : 0.05f);
+		float x = mObject.GetDrawOffsetMatrix().rows[0].x * fVar;	
+		float z = mObject.GetDrawOffsetMatrix().rows[0].z * fVar;*/	
+		
+		float fVar = 0.0f;
+		if (mObject.GetDrawOffsetMatrix().rows[0].x > -1.0f && mObject.GetDrawOffsetMatrix().rows[0].x < 0.0f && mObject.GetDrawOffsetMatrix().rows[0].z > 0.0f ) {
+			if (lbmoveLeft) {
+				lCamaraPos.z += 0.05f;		
+				lCamaraPos.x -= 0.05f;
+			}
+			else {
+				lCamaraPos.z -= 0.05f;		
+				lCamaraPos.x += 0.05f;
+			}
+		}
+		else if (mObject.GetDrawOffsetMatrix().rows[0].x > 0.0f && mObject.GetDrawOffsetMatrix().rows[0].x < 1.0f && mObject.GetDrawOffsetMatrix().rows[0].z > 0.0f ) {
+			if (lbmoveLeft) {
+				lCamaraPos.z += 0.05f;		
+				lCamaraPos.x += 0.05f;
+			}
+			else {
+				lCamaraPos.z -= 0.05f;		
+				lCamaraPos.x -= 0.05f;
+			}			
+		}
+		else if (mObject.GetDrawOffsetMatrix().rows[0].x < 1.0f && mObject.GetDrawOffsetMatrix().rows[0].x > 0.0f && mObject.GetDrawOffsetMatrix().rows[0].z < 0.0f ) {
+			if (lbmoveLeft) {
+				lCamaraPos.z -= 0.05f;		
+				lCamaraPos.x += 0.05f;
+			}
+			else {
+				lCamaraPos.z += 0.05f;		
+				lCamaraPos.x -= 0.05f;
+			}			
+		}
+		else if (mObject.GetDrawOffsetMatrix().rows[0].x < 0.0f && mObject.GetDrawOffsetMatrix().rows[0].x > -1.0f && mObject.GetDrawOffsetMatrix().rows[0].z < 0.0f ) {		
+			if (lbmoveLeft) {
+				lCamaraPos.z -= 0.05f;		
+				lCamaraPos.x -= 0.05f;
+			}
+			else {
+				lCamaraPos.z += 0.05f;		
+				lCamaraPos.x += 0.05f;
+			}
+		}	
+	
+		m3DCamera.SetView(lCamaraPos);
+
+		//m3DCamera.SetLookAt( -lCamaraPos, cVec3(0.0f, 1.5f, 0.0f), cVec3(0.0f, 1.f, 0.f) );
+	}    	
 
 	//Se actualizan los personajes:
 	cCharacterManager::Get().Update(lfTimestep);
