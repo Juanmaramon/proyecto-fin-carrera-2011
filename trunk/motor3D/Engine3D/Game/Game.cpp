@@ -54,6 +54,7 @@ bool cGame::Init()
 			//m3DCamera.SetLookAt( cVec3(5.f, 4.3f, 5.f),cVec3(0.f, 0.f, 0.f), cVec3(0.0f, 1.f, 0.f) );
 			m3DCamera.SetLookAt( cVec3(0.f, 1.5f, 20.f),cVec3(0.f, 1.5f, 0.f), cVec3(0.0f, 1.f, 0.f) );
 
+			glClearColor(1.0f, 0.9f, 0.7f, 1.0f);
 
 			//Se inicializa la clase que contendrá la lista de personajes.
 			lbResult = cCharacterManager::Get().Init();
@@ -231,9 +232,9 @@ void cGame::Update( float lfTimestep )
 	}*/
 	if ( lbmoveFront || lbmoveBack  ) {
 		float fVar = ( lbmoveFront ? 0.1f : -0.1f);
-		float x = mObject.GetDrawOffsetMatrix().rows[2].x * fVar;	
+		//float x = mObject.GetDrawOffsetMatrix().rows[2].x * fVar;	
 		float z = mObject.GetDrawOffsetMatrix().rows[2].z * fVar;	
-        mObject.SetPosition( mObject.GetPosition() + cVec3( x , 0.0f, z ) );
+        mObject.SetPosition( mObject.GetPosition() + cVec3( 0.f , 0.0f, z ) );
 
 		//lCamaraPos.z += ( lbmoveFront ? 0.1f : -0.1f); 
         lCamaraPos.z += fVar;		
@@ -241,17 +242,17 @@ void cGame::Update( float lfTimestep )
 	}
 
 	if ( lbmoveLeft ) {
-		//lCamaraPos.x -= -1.f;
-		lOffsetMatrix.LoadRotation( cVec3( 0.f, 1.f, 0.f ), 0.01f );
-		 //m3DCamera.SetView(lCamaraPos);
+		//lCamaraPos.x -= -10.f;
+		lOffsetMatrix.LoadRotation( cVec3( 0.f, 1.f, 0.f ), 0.01f );	
+		// m3DCamera.SetView(lCamaraPos);
 		//lTranslateOffset.LoadTranslation(cVec3(-0.1f, 0.0f, 0.0f ));
 		//mObject.SetPosition( mObject.GetPosition( ) + cVec3(-1.f, 0.0f, 0.0f ) );		
 
 		
 	}else if ( lbmoveRight ) {
 		//lTranslateOffset.LoadTranslation(cVec3(0.1f, 0.0f, 0.0f ));
-		lOffsetMatrix.LoadRotation( cVec3( 0.f, 1.f, 0.f ), -0.01f );
-		//lCamaraPos.x -= 1.f;
+		lOffsetMatrix.LoadRotation( cVec3( 0.f, 1.f, 0.f ), -0.01f );	
+		//lCamaraPos.x -= 10.f;
 		//m3DCamera.SetView(lCamaraPos);
 		//mObject.SetPosition( mObject.GetPosition( ) + cVec3( 1.f, 0.0f, 0.0f ) );
 	}
@@ -407,6 +408,18 @@ void cGame::Render()
 	lWorld.LoadIdentity();
 	cGraphicManager::Get().SetWorldMatrix(lWorld);
 
+	//Desactivamos la textura porque aún no tenemos materiales asignados a las mallas de la escena.
+//	glDisable(GL_TEXTURE_2D);
+	//Para renderizar la escena llamaremos al render de la escena a través de mScene (manejador de la escena, de tipo cResourceHandle).
+	//((cScene *)mScene.GetResource())->Render();
+//	glEnable(GL_TEXTURE_2D);
+
+	// 3.0) Display the terrain mesh.
+	mHeightmap.Render();
+
+	lWorld.LoadTranslation(cVec3(0.f, 0.f, 0.f));
+	cGraphicManager::Get().SetWorldMatrix(lWorld);
+
 	// Render the debug lines
 	cGraphicManager::Get().DrawGrid();
 	cGraphicManager::Get().DrawAxis();
@@ -414,28 +427,25 @@ void cGame::Render()
 	cGraphicManager::Get().DrawPoint( cVec3(1.5f, 0.0f, 1.5f), cVec3(1.0f, 0.0f, 1.0f) );
 	cGraphicManager::Get().DrawLine( cVec3(-1.5f, 0.0f, -1.5f), cVec3(-1.5f, 0.0f, 1.5f), cVec3(1.0f, 1.0f, 0.0f) );
 
-	//Desactivamos la textura porque aún no tenemos materiales asignados a las mallas de la escena.
-//	glDisable(GL_TEXTURE_2D);
-	//Para renderizar la escena llamaremos al render de la escena a través de mScene (manejador de la escena, de tipo cResourceHandle).
-	//((cScene *)mScene.GetResource())->Render();
-//	glEnable(GL_TEXTURE_2D);
+	lWorld.LoadIdentity();	
+	cGraphicManager::Get().SetWorldMatrix(lWorld);
 
 
-	//Se dibujan los personajes:
+
+	// 3.1) Se dibujan los personajes:
 	cCharacterManager::Get().Render();
 
-	// 3.1) Draws debug info of bullet
+
+	// 3.2) Draws debug info of bullet
 	cPhysics::Get().Render();	
 
-	// Display the terrain mesh.
-	mHeightmap.Render();
 
 	// Render physic objects
 	for ( unsigned int luiIndex = 0; luiIndex < 10; ++luiIndex) {
 		maSphereObjects[luiIndex].Render();	
 	}		
 
-	// 3.2) Render of the skeleton mesh
+	// 3.3) Render of the skeleton mesh
 	// -------------------------------------------------------------
 	mObject.Render();
 	cSkeletalMesh* lpSkeletonMesh = (cSkeletalMesh*)mSkeletalMesh.GetResource();
