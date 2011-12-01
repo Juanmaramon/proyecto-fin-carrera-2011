@@ -46,7 +46,7 @@ class cGraphicManager : public cSingleton<cGraphicManager>
 	  //Función que se encarga de la liberación de OpenGL. 
       bool Deinit();
 
-	  // Functio  to get active camera
+	  // Function  to get active camera
 	  cCamera * GetActiveCamera() { return mpActiveCamera; }
 	
 	  // Get world view proyection matrix

@@ -130,7 +130,7 @@ bool Heightmap::Load(){
 	// create ground object
 	float mass = 0.0;
    
-	btRigidBody* body = cPhysics::Get().GetNewBody(heightfieldShape, mass, cVec3(0, -200, 0));	
+	btRigidBody* body = cPhysics::Get().GetNewBody(heightfieldShape, mass, cVec3(-359, -140, -916));	
 
 	return true;
 }
@@ -296,7 +296,7 @@ void Heightmap::Render(){
 	glPushMatrix();
 //	glScalef(100.0f,100.0f,100.0f);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);	
-	glTranslatef(-BULLET_MAP_SIZE * 0.5f, -200.0f, -BULLET_MAP_SIZE * 0.5f); 
+	glTranslatef(/*-BULLET_MAP_SIZE * 0.5f*/ -390.f, -140.f, -950.f /*-BULLET_MAP_SIZE * 0.5f*/); 
 	glEnable(GL_TEXTURE_2D);
 	glCallList(disp_list_id);
 	glDisable(GL_TEXTURE_2D);
