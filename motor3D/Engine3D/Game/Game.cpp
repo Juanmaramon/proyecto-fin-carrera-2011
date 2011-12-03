@@ -21,6 +21,8 @@
 //pasándole la tabla kaActionMapping (de InputConfiguration.cpp).
 extern tActionMapping kaActionMapping[];
 
+extern const bool _DEBUG = true;
+
 //Función para inicializar el juego.
 bool cGame::Init()
 {	
@@ -84,10 +86,7 @@ bool cGame::Init()
 			cTextureManager::Get().Init(20);
 
 			// Terrain object
-			//mTerrain.initialize();
-
 			if (!mHeightmap.Load()) OutputDebugString("Heightmap terrain load error!");
-			/*mTerrain.Init();*/
 
 			//Se inicializa la clase que gestiona los materiales.
 			cMaterialManager::Get().Init(10);
@@ -162,21 +161,19 @@ bool cGame::Init()
 		
 			assert(lMaterial.IsValidHandle());
 			mObject.AddMesh(mSkeletalMesh, lMaterial);	
-			cMatrix lMatrix;
-			lMatrix.LoadScale(0.01f);
-			mObject.SetWorldMatrix(lMatrix);	
-
+		
 			mBoxModel.InitBox( 0.0f, cVec3( 0.3f, 1.0f, 0.3f ) );
 			mObject.CreatePhysics( &mBoxModel );
 			lScaleMatrix.LoadScale(0.01f);
 			mObject.SetScaleMatrix( lScaleMatrix );
 
-			cMatrix lRotateMatrix;
-			lOffsetMatrix.LoadTranslation( cVec3( 0.0f, -1.0f, 0.0f ) );
-			lRotateMatrix.LoadRotation( cVec3( 0.f, 1.f, 0.f ), 329.9f );
-			mObject.SetDrawOffsetMatrix( lOffsetMatrix * lRotateMatrix );
-			mObject.SetKinematic( );
-			mObject.SetPosition( cVec3( 0.0f, 0.0f, 15.0f ) );
+			cMatrix lMatrix;
+			lMatrix.LoadTranslation(cVec3(0.f, -1.f, 0.f));
+			mObject.SetDrawOffsetMatrix( lMatrix );
+			mObject.SetKinematic( );	
+
+			//CharacterPos::Get().Init(cVec3(0.f, 0.f, 15.f), 329.9f, 1);
+			CharacterPos::Get().Init(cVec3(0.f, 0.f, 15.f), /*3.139f*/ 0.f, 1, 0.1f);
 		}		
 		else
 		{
@@ -213,35 +210,43 @@ void cGame::Update( float lfTimestep )
 	bool lbmoveBack = IsPressed( eIA_MoveBack );
 	bool lbmoveLeft = IsPressed( eIA_MoveLeft );
 	bool lbmoveRight = IsPressed( eIA_MoveRight );
+	
+	cVec3 lCamaraPos = m3DCamera.GetPosition();
 
-	cMatrix lOffsetMatrix, lRotateOffset, lTranslateOffset;
-	cVec3 lCamaraPos;
-	lOffsetMatrix.LoadIdentity();
-	lRotateOffset.LoadIdentity();
-	lTranslateOffset.LoadIdentity();
-	lCamaraPos = m3DCamera.GetPosition();
+	// Actualiza el flag de movimiento del personaje
+	CharacterPos::Get().ResetChanged();
 
-	/*if ( lbmoveFront ) {
-		mObject.SetPosition( mObject.GetPosition( ) + cVec3( 0.0f, 0.0f, -1.f ) );
-		lCamaraPos.z += 1.f;
-		m3DCamera.SetView(lCamaraPos);
-	}else if ( lbmoveBack  ) {
-		lCamaraPos.z -= 1.f;
-		m3DCamera.SetView(lCamaraPos);
-		mObject.SetPosition( mObject.GetPosition( ) + cVec3( 0.0f, 0.0f, 1.f ) );
-	}*/
-	if ( lbmoveFront || lbmoveBack  ) {
-		float fVar = ( lbmoveFront ? 0.1f : -0.1f);
-		//float x = mObject.GetDrawOffsetMatrix().rows[2].x * fVar;	
-		float z = mObject.GetDrawOffsetMatrix().rows[2].z * fVar;	
-        mObject.SetPosition( mObject.GetPosition() + cVec3( 0.f , 0.0f, z ) );
-
-		//lCamaraPos.z += ( lbmoveFront ? 0.1f : -0.1f); 
-        lCamaraPos.z += fVar;		
-		m3DCamera.SetView(lCamaraPos);
+	if ( lbmoveFront ) {
+		CharacterPos::Get().MoveFront();
+		lCamaraPos.z += CharacterPos::Get().GetVelocity();
+	}
+	if ( lbmoveBack ){
+		CharacterPos::Get().MoveBack();
+		lCamaraPos.z -= CharacterPos::Get().GetVelocity();
+	}
+	if ( lbmoveLeft ){
+		CharacterPos::Get().StrafeLeft();
+	}
+	if ( lbmoveRight ){
+		CharacterPos::Get().StrafeRight();
 	}
 
-	if ( lbmoveLeft ) {
+	if (CharacterPos::Get().IsChanged()){
+		if (_DEBUG){
+			char buf[2048];
+			//sprintf(buf,"Position (x,y,z), (angle) is (%2.0f%,%2.0f,%2.0f), (%2.f) \n",lTranslateOffset.rows[3].x,lTranslateOffset.rows[3].y,lTranslateOffset.rows[3].z, 
+			//		CharacterPos::Get().GetYaw());
+			OutputDebugString(buf);	
+		}
+	}
+
+	mObject.SetPosition(CharacterPos::Get().GetCharacterPosition() + (CharacterPos::Get().GetFront() * CharacterPos::Get().GetVelocity())); 
+
+	// Actualiza cámara y personaje
+	m3DCamera.SetView(lCamaraPos);
+	mObject.Update(lfTimestep);
+
+/*	if ( lbmoveLeft ) {
 		//lCamaraPos.x -= -10.f;
 		lOffsetMatrix.LoadRotation( cVec3( 0.f, 1.f, 0.f ), 0.01f );	
 		// m3DCamera.SetView(lCamaraPos);
@@ -269,9 +274,9 @@ void cGame::Update( float lfTimestep )
 	rows2[3] = mObject.GetDrawOffsetMatrix().rows[3];
 
 	if ( lbmoveLeft || lbmoveRight ) {
-		/*float fVar = (lbmoveLeft ? -0.05f : 0.05f);
-		float x = mObject.GetDrawOffsetMatrix().rows[0].x * fVar;	
-		float z = mObject.GetDrawOffsetMatrix().rows[0].z * fVar;*/	
+		//float fVar = (lbmoveLeft ? -0.05f : 0.05f);
+		//float x = mObject.GetDrawOffsetMatrix().rows[0].x * fVar;	
+		//float z = mObject.GetDrawOffsetMatrix().rows[0].z * fVar;	
 		
 		float fVar = 0.0f;
 		if (mObject.GetDrawOffsetMatrix().rows[0].x > -1.0f && mObject.GetDrawOffsetMatrix().rows[0].x < 0.0f && mObject.GetDrawOffsetMatrix().rows[0].z > 0.0f ) {
@@ -318,13 +323,15 @@ void cGame::Update( float lfTimestep )
 		m3DCamera.SetView(lCamaraPos);
 
 		//m3DCamera.SetLookAt( -lCamaraPos, cVec3(0.0f, 1.5f, 0.0f), cVec3(0.0f, 1.f, 0.f) );
-	}    	
+	}    */	
 
-	//Se actualizan los personajes:
-	cCharacterManager::Get().Update(lfTimestep);
+
 
 	// Update bullet physics object
 	cPhysics::Get().Update(lfTimestep);
+
+	//Se actualizan los personajes:
+	cCharacterManager::Get().Update(lfTimestep);
 
 	// Update physic objects
 	for ( unsigned int luiIndex = 0; luiIndex < 10; ++luiIndex) {
@@ -361,7 +368,7 @@ void cGame::Update( float lfTimestep )
 
 	// Updates skeleton state
 	//lpSkeletonMesh->Update(lfTimestep);
-	mObject.Update(lfTimestep);
+
 	
 	//Se comprueba si hay que cerrar la aplicación, por ejemplo a causa de 
 	// que el usuario haya cerrado la ventana. 
@@ -430,8 +437,6 @@ void cGame::Render()
 	lWorld.LoadIdentity();	
 	cGraphicManager::Get().SetWorldMatrix(lWorld);
 
-
-
 	// 3.1) Se dibujan los personajes:
 	cCharacterManager::Get().Render();
 
@@ -447,9 +452,23 @@ void cGame::Render()
 
 	// 3.3) Render of the skeleton mesh
 	// -------------------------------------------------------------
+	cMatrix lCurrPos, lTranslateOffset, lRotateOffset;
+	lCurrPos.LoadIdentity();
+	lCurrPos.LoadRotation(cVec3(0.f, 1.f, 0.f), CharacterPos::Get().GetYaw());
+	lCurrPos.SetPosition(CharacterPos::Get().GetCharacterPosition());
+
+
+	//mObject.SetWorldMatrix(lRotateOffset * lTranslateOffset);
+	//mObject.ReloadPhysicPosition(lRotateOffset, lTranslateOffset);
+	//lCurrPos = lRotateOffset * lTranslateOffset;
+	cGraphicManager::Get().SetWorldMatrix(lCurrPos);
+
 	mObject.Render();
-	cSkeletalMesh* lpSkeletonMesh = (cSkeletalMesh*)mSkeletalMesh.GetResource();
-	lpSkeletonMesh->RenderSkeleton();	
+
+	lWorld.LoadIdentity();	
+	cGraphicManager::Get().SetWorldMatrix(lWorld);
+	//cSkeletalMesh* lpSkeletonMesh = (cSkeletalMesh*)mSkeletalMesh.GetResource();
+	//lpSkeletonMesh->RenderSkeleton();	
 
 	 
 	// 4) Renderizado de Geometría 3D con transparencia
@@ -513,8 +532,6 @@ bool cGame::Deinit()
 	cTextureManager::Get().Deinit();  
 	// Deinitialization of terrain
 	mHeightmap.Deinit();
-	//mTerrain.~Terrain();
-
 	// Deinitialization of physics object 
 	cPhysics::Get().Deinit();
 	//Se libera el InputManager:

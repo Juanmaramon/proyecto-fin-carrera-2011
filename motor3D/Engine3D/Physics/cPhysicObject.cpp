@@ -45,6 +45,13 @@ void cPhysicObject::SetPosition( const cVec3 &lPosition ){
 	}
 }
 
+void cPhysicObject::ReloadPhysicPosition(cMatrix &lRotationMatrix, cMatrix &lTranslationMatrix){
+	// Inform Bullet of the new Position
+	if ( mpPhysicBody && mpPhysicBody->getMotionState( ) ) {
+		mpPhysicBody->getMotionState()->setWorldTransform(cPhysics::Local2Bullet( lRotationMatrix * lTranslationMatrix ));
+	}
+}
+
 cVec3 cPhysicObject::GetPosition( ){
 	return mPosition;
 }
