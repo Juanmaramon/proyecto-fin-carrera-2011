@@ -692,6 +692,18 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="CharacterPos"
+				>
+				<File
+					RelativePath=".\Gameplay\CharacterPos\CharacterPos.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Gameplay\CharacterPos\CharacterPos.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="LoadXML"

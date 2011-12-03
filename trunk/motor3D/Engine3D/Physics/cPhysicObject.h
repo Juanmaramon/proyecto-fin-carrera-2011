@@ -18,6 +18,7 @@ public:
 	void SetKinematic( );
 	void SetPosition( const cVec3 &lPosition );
 	cVec3 GetPosition( );
+	void ReloadPhysicPosition(cMatrix &lRotationMatrix, cMatrix &lTranslationMatrix);
 private:
 	btRigidBody *mpPhysicBody;
 	cMatrix mScaleMatrix;
