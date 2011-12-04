@@ -21,8 +21,6 @@
 //pasándole la tabla kaActionMapping (de InputConfiguration.cpp).
 extern tActionMapping kaActionMapping[];
 
-extern const bool _DEBUG = true;
-
 //Función para inicializar el juego.
 bool cGame::Init()
 {	
@@ -167,13 +165,12 @@ bool cGame::Init()
 			lScaleMatrix.LoadScale(0.01f);
 			mObject.SetScaleMatrix( lScaleMatrix );
 
-			cMatrix lMatrix;
-			lMatrix.LoadTranslation(cVec3(0.f, -1.f, 0.f));
-			mObject.SetDrawOffsetMatrix( lMatrix );
+			cMatrix lRotation, lTranslation;
+			lTranslation.LoadTranslation(cVec3(0.f, -1.f, 0.f));
+			mObject.SetDrawOffsetMatrix( lTranslation );
 			mObject.SetKinematic( );	
 
-			//CharacterPos::Get().Init(cVec3(0.f, 0.f, 15.f), 329.9f, 1);
-			CharacterPos::Get().Init(cVec3(0.f, 0.f, 15.f), /*3.139f*/ 0.f, 1, 0.1f);
+			CharacterPos::Get().Init(cVec3(0.f, 0.f, 15.f), 329.9f, 10, 0.5f);
 		}		
 		else
 		{
@@ -216,116 +213,37 @@ void cGame::Update( float lfTimestep )
 	// Actualiza el flag de movimiento del personaje
 	CharacterPos::Get().ResetChanged();
 
+	CharacterPos::Get().Update(lfTimestep);
+
 	if ( lbmoveFront ) {
 		CharacterPos::Get().MoveFront();
-		lCamaraPos.z += CharacterPos::Get().GetVelocity();
 	}
-	if ( lbmoveBack ){
+	else if ( lbmoveBack ){
 		CharacterPos::Get().MoveBack();
-		lCamaraPos.z -= CharacterPos::Get().GetVelocity();
 	}
 	if ( lbmoveLeft ){
-		CharacterPos::Get().StrafeLeft();
+		CharacterPos::Get().TurnLeft();
 	}
-	if ( lbmoveRight ){
-		CharacterPos::Get().StrafeRight();
-	}
-
-	if (CharacterPos::Get().IsChanged()){
-		if (_DEBUG){
-			char buf[2048];
-			//sprintf(buf,"Position (x,y,z), (angle) is (%2.0f%,%2.0f,%2.0f), (%2.f) \n",lTranslateOffset.rows[3].x,lTranslateOffset.rows[3].y,lTranslateOffset.rows[3].z, 
-			//		CharacterPos::Get().GetYaw());
-			OutputDebugString(buf);	
-		}
+	else if ( lbmoveRight ){
+		CharacterPos::Get().TurnRight();
 	}
 
-	mObject.SetPosition(CharacterPos::Get().GetCharacterPosition() + (CharacterPos::Get().GetFront() * CharacterPos::Get().GetVelocity())); 
+	mObject.SetPosition(CharacterPos::Get().GetCharacterPosition(), CharacterPos::Get().GetYaw());
 
 	// Actualiza cámara y personaje
-	m3DCamera.SetView(lCamaraPos);
 	mObject.Update(lfTimestep);
+	cVec3 vVector = CharacterPos::Get().GetCharacterPosition() - CharacterPos::Get().GetFront();
 
-/*	if ( lbmoveLeft ) {
-		//lCamaraPos.x -= -10.f;
-		lOffsetMatrix.LoadRotation( cVec3( 0.f, 1.f, 0.f ), 0.01f );	
-		// m3DCamera.SetView(lCamaraPos);
-		//lTranslateOffset.LoadTranslation(cVec3(-0.1f, 0.0f, 0.0f ));
-		//mObject.SetPosition( mObject.GetPosition( ) + cVec3(-1.f, 0.0f, 0.0f ) );		
+	m3DCamera.SetLookAt( cVec3(vVector.x,
+							   vVector.y + 0.6f,
+							   vVector.z),
+							   CharacterPos::Get().GetCharacterPosition(), 
+							   cVec3(0.0f, 1.f, 0.f) );
 
-		
-	}else if ( lbmoveRight ) {
-		//lTranslateOffset.LoadTranslation(cVec3(0.1f, 0.0f, 0.0f ));
-		lOffsetMatrix.LoadRotation( cVec3( 0.f, 1.f, 0.f ), -0.01f );	
-		//lCamaraPos.x -= 10.f;
-		//m3DCamera.SetView(lCamaraPos);
-		//mObject.SetPosition( mObject.GetPosition( ) + cVec3( 1.f, 0.0f, 0.0f ) );
-	}
-	
-	cVec4 rows2[4];
-	rows2[0] = mObject.GetDrawOffsetMatrix().rows[0];
-	rows2[1] = mObject.GetDrawOffsetMatrix().rows[1];
-	rows2[2] = mObject.GetDrawOffsetMatrix().rows[2];
-	rows2[3] = mObject.GetDrawOffsetMatrix().rows[3];
-	mObject.SetDrawOffsetMatrix(mObject.GetDrawOffsetMatrix() * (lTranslateOffset * lOffsetMatrix));
-    rows2[0] = mObject.GetDrawOffsetMatrix().rows[0];
-	rows2[1] = mObject.GetDrawOffsetMatrix().rows[1];
-	rows2[2] = mObject.GetDrawOffsetMatrix().rows[2];
-	rows2[3] = mObject.GetDrawOffsetMatrix().rows[3];
-
-	if ( lbmoveLeft || lbmoveRight ) {
-		//float fVar = (lbmoveLeft ? -0.05f : 0.05f);
-		//float x = mObject.GetDrawOffsetMatrix().rows[0].x * fVar;	
-		//float z = mObject.GetDrawOffsetMatrix().rows[0].z * fVar;	
-		
-		float fVar = 0.0f;
-		if (mObject.GetDrawOffsetMatrix().rows[0].x > -1.0f && mObject.GetDrawOffsetMatrix().rows[0].x < 0.0f && mObject.GetDrawOffsetMatrix().rows[0].z > 0.0f ) {
-			if (lbmoveLeft) {
-				lCamaraPos.z += 0.05f;		
-				lCamaraPos.x -= 0.05f;
-			}
-			else {
-				lCamaraPos.z -= 0.05f;		
-				lCamaraPos.x += 0.05f;
-			}
-		}
-		else if (mObject.GetDrawOffsetMatrix().rows[0].x > 0.0f && mObject.GetDrawOffsetMatrix().rows[0].x < 1.0f && mObject.GetDrawOffsetMatrix().rows[0].z > 0.0f ) {
-			if (lbmoveLeft) {
-				lCamaraPos.z += 0.05f;		
-				lCamaraPos.x += 0.05f;
-			}
-			else {
-				lCamaraPos.z -= 0.05f;		
-				lCamaraPos.x -= 0.05f;
-			}			
-		}
-		else if (mObject.GetDrawOffsetMatrix().rows[0].x < 1.0f && mObject.GetDrawOffsetMatrix().rows[0].x > 0.0f && mObject.GetDrawOffsetMatrix().rows[0].z < 0.0f ) {
-			if (lbmoveLeft) {
-				lCamaraPos.z -= 0.05f;		
-				lCamaraPos.x += 0.05f;
-			}
-			else {
-				lCamaraPos.z += 0.05f;		
-				lCamaraPos.x -= 0.05f;
-			}			
-		}
-		else if (mObject.GetDrawOffsetMatrix().rows[0].x < 0.0f && mObject.GetDrawOffsetMatrix().rows[0].x > -1.0f && mObject.GetDrawOffsetMatrix().rows[0].z < 0.0f ) {		
-			if (lbmoveLeft) {
-				lCamaraPos.z -= 0.05f;		
-				lCamaraPos.x -= 0.05f;
-			}
-			else {
-				lCamaraPos.z += 0.05f;		
-				lCamaraPos.x += 0.05f;
-			}
-		}	
-	
-		m3DCamera.SetView(lCamaraPos);
-
-		//m3DCamera.SetLookAt( -lCamaraPos, cVec3(0.0f, 1.5f, 0.0f), cVec3(0.0f, 1.f, 0.f) );
-	}    */	
-
-
+	char buf[2048];
+	sprintf(buf,"Camera position is (%2.2f,%2.2f, %2.2f), camera look at is (%2.0f%,%2.0f,%2.0f)\n",vVector.x,vVector.y,
+			vVector.z, CharacterPos::Get().GetCharacterPosition().x, CharacterPos::Get().GetCharacterPosition().y, CharacterPos::Get().GetCharacterPosition().z);
+	OutputDebugString(buf);	
 
 	// Update bullet physics object
 	cPhysics::Get().Update(lfTimestep);
@@ -365,10 +283,6 @@ void cGame::Update( float lfTimestep )
 	}else if (lbStopWavePressed){
 		lpSkeletonMesh->StopAnim("Wave", 0.1f);
 	}
-
-	// Updates skeleton state
-	//lpSkeletonMesh->Update(lfTimestep);
-
 	
 	//Se comprueba si hay que cerrar la aplicación, por ejemplo a causa de 
 	// que el usuario haya cerrado la ventana. 
@@ -444,7 +358,6 @@ void cGame::Render()
 	// 3.2) Draws debug info of bullet
 	cPhysics::Get().Render();	
 
-
 	// Render physic objects
 	for ( unsigned int luiIndex = 0; luiIndex < 10; ++luiIndex) {
 		maSphereObjects[luiIndex].Render();	
@@ -452,16 +365,12 @@ void cGame::Render()
 
 	// 3.3) Render of the skeleton mesh
 	// -------------------------------------------------------------
-	cMatrix lCurrPos, lTranslateOffset, lRotateOffset;
+	cMatrix lRotation, lCurrPos;
 	lCurrPos.LoadIdentity();
-	lCurrPos.LoadRotation(cVec3(0.f, 1.f, 0.f), CharacterPos::Get().GetYaw());
+	lRotation.LoadRotation(cVec3(0.f, 1.f, 0.f), CharacterPos::Get().GetYaw());
 	lCurrPos.SetPosition(CharacterPos::Get().GetCharacterPosition());
 
-
-	//mObject.SetWorldMatrix(lRotateOffset * lTranslateOffset);
-	//mObject.ReloadPhysicPosition(lRotateOffset, lTranslateOffset);
-	//lCurrPos = lRotateOffset * lTranslateOffset;
-	cGraphicManager::Get().SetWorldMatrix(lCurrPos);
+	cGraphicManager::Get().SetWorldMatrix(lRotation * lCurrPos);
 
 	mObject.Render();
 

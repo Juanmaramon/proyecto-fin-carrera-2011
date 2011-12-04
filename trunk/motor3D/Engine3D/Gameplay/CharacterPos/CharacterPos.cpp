@@ -6,6 +6,7 @@ void CharacterPos::Init(cVec3 lPosIni, float lYawIni, int lVel, float lAngVel){
 	mVelocity = lVel;
 	mAngVel = lAngVel;
 	mPosDirChange = false;
+	mDisplacement = 0.0f;
 }
 
 void CharacterPos::DeInit(void){}
@@ -24,20 +25,26 @@ void CharacterPos::SetVelocity(int lVel){
 	mVelocity = lVel;
 }
 
-void CharacterPos::MoveFront(void){
-	mPosition += cVec3( 0.0f, 0.0f, -mVelocity );
+void CharacterPos::MoveFront(){
+	mPosition += GetFront() * mDisplacement;
 	mPosDirChange = true;
 }
 
 void CharacterPos::MoveBack(void){
-	mPosition += cVec3( 0.0f, 0.0f, mVelocity );
+	//mPosition += cVec3( 0.0f, 0.0f, mDisplacement );
+	mPosition -= GetFront() * mDisplacement;
 	mPosDirChange = true;
 }
 
-void CharacterPos::StrafeRight(void){
-	mYaw -= mAngVel; 	
+void CharacterPos::TurnRight(void){
+	mYaw -= mAngDisplacement; 	
 }
 
-void CharacterPos::StrafeLeft(void){
-	mYaw += mAngVel; 	
+void CharacterPos::TurnLeft(void){
+	mYaw += mAngDisplacement; 	
+}
+
+void CharacterPos::Update(float lfTimestep){
+	mDisplacement = mVelocity * lfTimestep;
+	mAngDisplacement = mAngVel * lfTimestep;
 }
