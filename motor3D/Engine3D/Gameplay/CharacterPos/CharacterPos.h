@@ -16,6 +16,10 @@ private:
 	int mVelocity;
 	// Angular velocity of character
 	float mAngVel;
+	// Espacio (velocidad * tiempo transcurrido)
+	float mDisplacement;
+	// Velocidad angular depediente del tiempo
+	float mAngDisplacement;
 public:
 	void Init(cVec3 lPosIni, float lYawIni, int lVel, float lAngVel);
 	void DeInit(void);
@@ -28,12 +32,13 @@ public:
 	void SetCharacterPosition(cVec3 lPos);
 	void SetCharacterYaw(float lYaw);
 	void SetVelocity(int lvel);
-	void MoveFront(void);
+	void MoveFront();
 	void MoveBack(void);
-	void StrafeRight(void);
-	void StrafeLeft(void);
+	void TurnRight(void);
+	void TurnLeft(void);
 	//Devuelve el vector Front del personaje.
 	inline cVec3 GetFront() const { return  cVec3(   sinf(mYaw),  0.0f, cosf(mYaw) ); }
+	void Update(float lfTimestep);
 };
 
 #endif
