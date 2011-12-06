@@ -44,16 +44,16 @@ bool cGame::Init()
 		{
 			// Init Camera 3D
 			m3DCamera.Init();  
+			// Inicializa camara godmode
+			mGodCamera.Init();
 			float lfAspect = (float)mProperties.muiWidth/(float)mProperties.muiHeight;
 			m3DCamera.SetPerspective(45.0f, lfAspect,0.1f,1000.0f);
-			//Se pone la cámara en la posición (5,5,5) de nuestro mundo,
-			// apuntando al origen del mismo, e indicando que el vector UP de la cámara apunta hacia arriba.
-			//m3DCamera.SetLookAt( cVec3(5.0f, 5.f, 5.f), cVec3(0.0f, 0.f, 0.f), cVec3(0.0f, 1.f, 0.f) );		
-
+			mGodCamera.SetPerspective( 45.0f, lfAspect, 0.1f, 10000.0f );
+	
 			//Se aleja la cámara para ver bien la escena que vamos a cargar posteriormente.
-			//m3DCamera.SetLookAt( cVec3(5.f, 4.3f, 5.f),cVec3(0.f, 0.f, 0.f), cVec3(0.0f, 1.f, 0.f) );
 			m3DCamera.SetLookAt( cVec3(0.f, 1.5f, 20.f),cVec3(0.f, 1.5f, 0.f), cVec3(0.0f, 1.f, 0.f) );
 
+			// Resetea color de fondo
 			glClearColor(1.0f, 0.9f, 0.7f, 1.0f);
 
 			//Se inicializa la clase que contendrá la lista de personajes.
@@ -160,20 +160,23 @@ bool cGame::Init()
 			assert(lMaterial.IsValidHandle());
 			mObject.AddMesh(mSkeletalMesh, lMaterial);	
 		
+			// Bounding box del personaje
 			mBoxModel.InitBox( 0.0f, cVec3( 0.3f, 1.0f, 0.3f ) );
 			mObject.CreatePhysics( &mBoxModel );
 			lScaleMatrix.LoadScale(0.01f);
 			mObject.SetScaleMatrix( lScaleMatrix );
 
+			// Posicionamiento inicial del personaje
 			cMatrix lRotation, lTranslation;
 			lTranslation.LoadTranslation(cVec3(0.f, -1.f, 0.f));
 			mObject.SetDrawOffsetMatrix( lTranslation );
 			mObject.SetKinematic( );	
 
 			CharacterPos::Get().Init(cVec3(0.f, 0.f, 15.f), 329.9f, 10, 0.5f);
-		}		
-		else
-		{
+		
+			// Estamos en modo juego, no depuración
+			mbInGame = true;
+		} else {
 			//Si algo falla se libera la ventana.
 			cWindow::Get().Deinit();
 		}
@@ -203,48 +206,74 @@ void cGame::Update( float lfTimestep )
 		cEffectManager::Get().Reload();
 	}
 
+	// Recoge input teclado
 	bool lbmoveFront = IsPressed( eIA_MoveFront );
 	bool lbmoveBack = IsPressed( eIA_MoveBack );
 	bool lbmoveLeft = IsPressed( eIA_MoveLeft );
-	bool lbmoveRight = IsPressed( eIA_MoveRight );
-	
-	cVec3 lCamaraPos = m3DCamera.GetPosition();
+	bool lbmoveRight = IsPressed( eIA_MoveRight );	
+	bool lbswitchCamera = BecomePressed( eIA_SwitchCamera );
+
+	// Switch entre camara de juego/godmode
+	if (lbswitchCamera)
+		mbInGame = !mbInGame;
 
 	// Actualiza el flag de movimiento del personaje
 	CharacterPos::Get().ResetChanged();
-
+	// Calcula velocidad * tiempo transcurrido
 	CharacterPos::Get().Update(lfTimestep);
 
-	if ( lbmoveFront ) {
-		CharacterPos::Get().MoveFront();
-	}
-	else if ( lbmoveBack ){
-		CharacterPos::Get().MoveBack();
-	}
-	if ( lbmoveLeft ){
-		CharacterPos::Get().TurnLeft();
-	}
-	else if ( lbmoveRight ){
-		CharacterPos::Get().TurnRight();
+	// En modo juego, actualiza jugador
+	if (mbInGame){
+		mGodCamera.ResetYawPitch();
+		if ( lbmoveFront ) {
+			CharacterPos::Get().MoveFront();
+		}
+		else if ( lbmoveBack ){
+			CharacterPos::Get().MoveBack();
+		}
+		if ( lbmoveLeft ){
+			CharacterPos::Get().TurnLeft();
+		}
+		else if ( lbmoveRight ){
+			CharacterPos::Get().TurnRight();
+		}
+
+		// Actualizacion de cámara de juego
+		float lfDistance = 5.f;
+		cVec3 vVector = CharacterPos::Get().GetCharacterPosition() - CharacterPos::Get().GetFront() * lfDistance;
+
+		m3DCamera.SetLookAt( cVec3(vVector.x,
+								   vVector.y + 1.5f,
+								   vVector.z),
+								   CharacterPos::Get().GetCharacterPosition(), 
+								   cVec3(0.0f, 1.f, 0.f) );
+	// Modo Godmode	
+	} else {
+		// Actualizacion camara godmode
+		if ( lbmoveFront ) {
+			mGodCamera.MoveFront(lfTimestep);				
+		}
+		else if ( lbmoveBack ){
+			mGodCamera.MoveBack(lfTimestep);
+		}
+		if ( lbmoveLeft ){
+			mGodCamera.MoveLeft(lfTimestep);
+		}
+		else if ( lbmoveRight ){
+			mGodCamera.MoveRight(lfTimestep);
+		}
+		// Rotaciones del ratón
+		float lfYaw = GetValue( eIA_MouseYaw );
+		float lfPitch = GetValue( eIA_MousePitch );
+		if (lfYaw || lfPitch){
+			mGodCamera.MoveYawPitch(lfYaw, lfPitch, lfTimestep);
+		}
 	}
 
 	mObject.SetPosition(CharacterPos::Get().GetCharacterPosition(), CharacterPos::Get().GetYaw());
 
-	// Actualiza cámara y personaje
+	// Actualiza personaje
 	mObject.Update(lfTimestep);
-	float lfDistance = 5.f;
-	cVec3 vVector = CharacterPos::Get().GetCharacterPosition() - CharacterPos::Get().GetFront() * lfDistance;
-
-	m3DCamera.SetLookAt( cVec3(vVector.x,
-							   vVector.y + 1.5f,
-							   vVector.z),
-							   CharacterPos::Get().GetCharacterPosition(), 
-							   cVec3(0.0f, 1.f, 0.f) );
-
-	char buf[2048];
-	sprintf(buf,"Camera position is (%2.2f,%2.2f, %2.2f), camera look at is (%2.0f%,%2.0f,%2.0f)\n",vVector.x,vVector.y,
-			vVector.z, CharacterPos::Get().GetCharacterPosition().x, CharacterPos::Get().GetCharacterPosition().y, CharacterPos::Get().GetCharacterPosition().z);
-	OutputDebugString(buf);	
 
 	// Update bullet physics object
 	cPhysics::Get().Update(lfTimestep);
@@ -321,8 +350,11 @@ void cGame::Render()
 	 
 	// 2) Activación de Cámara 3D
 	// -------------------------------------------------------------
-	cGraphicManager::Get().ActivateCamera( &m3DCamera );
-	 
+	if (mbInGame)
+		cGraphicManager::Get().ActivateCamera( &m3DCamera );
+	else	
+		cGraphicManager::Get().ActivateCamera( &mGodCamera );
+
 	// 3) Renderizado de Geometría 3D sólida
 	// -------------------------------------------------------------
 	// Set the world matrix

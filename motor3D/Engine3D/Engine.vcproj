@@ -273,6 +273,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Graphics\GodCamera.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Graphics\GodCamera.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Graphics\GraphicManager.cpp"
 				>
 			</File>
@@ -1060,6 +1068,10 @@
 				RelativePath=".\LuaManager\cLuaManager.h"
 				>
 			</File>
+		</Filter>
+		<Filter
+			Name="Input"
+			>
 		</Filter>
 		<File
 			RelativePath=".\main.cpp"
