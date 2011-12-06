@@ -232,10 +232,11 @@ void cGame::Update( float lfTimestep )
 
 	// Actualiza cámara y personaje
 	mObject.Update(lfTimestep);
-	cVec3 vVector = CharacterPos::Get().GetCharacterPosition() - CharacterPos::Get().GetFront();
+	float lfDistance = 5.f;
+	cVec3 vVector = CharacterPos::Get().GetCharacterPosition() - CharacterPos::Get().GetFront() * lfDistance;
 
 	m3DCamera.SetLookAt( cVec3(vVector.x,
-							   vVector.y + 0.6f,
+							   vVector.y + 1.5f,
 							   vVector.z),
 							   CharacterPos::Get().GetCharacterPosition(), 
 							   cVec3(0.0f, 1.f, 0.f) );
