@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "GraphicManager.h"
 
-#define MOUSE_SPEED 2.f 
+#define MOUSE_SPEED 0.5f 
 
 void GodCamera::Init(){
 	mNew_pos  = cVec3(0.0f, 0.0f, 0.0f);
