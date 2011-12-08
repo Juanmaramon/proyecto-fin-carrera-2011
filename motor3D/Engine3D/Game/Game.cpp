@@ -176,6 +176,8 @@ bool cGame::Init()
 		
 			// Estamos en modo juego, no depuración
 			mbInGame = true;
+			// Se inicializa en modo rasterizacion solida
+			mbRasterizationMode = true;
 		} else {
 			//Si algo falla se libera la ventana.
 			cWindow::Get().Deinit();
@@ -212,10 +214,14 @@ void cGame::Update( float lfTimestep )
 	bool lbmoveLeft = IsPressed( eIA_MoveLeft );
 	bool lbmoveRight = IsPressed( eIA_MoveRight );	
 	bool lbswitchCamera = BecomePressed( eIA_SwitchCamera );
+	bool lbswitchRasterizationMode = BecomePressed( eIA_SwitchFillLineMode );
 
 	// Switch entre camara de juego/godmode
 	if (lbswitchCamera)
 		mbInGame = !mbInGame;
+	// Switch entre el modo de rasterizacion solido/wireframe
+	if (lbswitchRasterizationMode)
+		mbRasterizationMode = !mbRasterizationMode;
 
 	// Actualiza el flag de movimiento del personaje
 	CharacterPos::Get().ResetChanged();
@@ -354,6 +360,12 @@ void cGame::Render()
 		cGraphicManager::Get().ActivateCamera( &m3DCamera );
 	else	
 		cGraphicManager::Get().ActivateCamera( &mGodCamera );
+
+	// Modo de rasterizacion solida/wireframe
+	if (mbRasterizationMode)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	else
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	// 3) Renderizado de Geometría 3D sólida
 	// -------------------------------------------------------------

@@ -23,6 +23,7 @@ tActionMapping kaActionMapping[] = {
 	{ eIA_MouseYaw, eMouse, eMouse_AxisX },				 // Esta fila indica que la coordenada X del ratón será el grado de giro sobre el eje Y
 	{ eIA_MousePitch, eMouse, eMouse_AxisY },			 // Esta fila indica que la coordenada Y del ratón será el grado de giro sobre el eje X
 	{ eIA_SwitchCamera, eKeyboard, OIS::KC_1 },			 // Esta fila asocia la tecla 1 con el cambiar de modo de cámara (game/godmode)
-	//	{ eIA_CloseApplication, eMouse, eMouse_ButtonMiddle }, //Esta fila indica que la acción salir con el mouse está asociada al botón central.	                                                     	 
+	//	{ eIA_CloseApplication, eMouse, eMouse_ButtonMiddle }, //Esta fila indica que la acción salir con el mouse está asociada al botón central.	
+	{ eIA_SwitchFillLineMode, eKeyboard, OIS::KC_2 },	 // Esta fila asocia la tecla 1 con el cambiar la rasterizacion de solida a modo wireframe.
 	{ -1, -1, -1}  // End of the table (Marca el final de la tabla)
 };

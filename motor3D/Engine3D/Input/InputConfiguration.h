@@ -21,6 +21,7 @@ enum eInputActions {
 	eIA_MouseYaw = 10,				// Rotación eje Y del ratón.
 	eIA_MousePitch = 11,			// Rotación eje X del ratón.
 	eIA_SwitchCamera = 12,			// Switch entre cámara juego/godmode.
+	eIA_SwitchFillLineMode = 13,	// Switch entre rasterizacion solida/wireframe.
     eIA_Count						//Indica cuantas acciones de entrada hay.
 }; 
 
