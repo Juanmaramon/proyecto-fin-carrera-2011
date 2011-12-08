@@ -40,6 +40,8 @@ protected:
 		Heightmap mHeightmap;
 		// Cámara de juego o godmode
 		bool mbInGame;
+		// Modo de rasterizacion solida/wireframe
+		bool mbRasterizationMode;
 		// Camara godmode
 		GodCamera mGodCamera;
 
