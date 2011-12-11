@@ -55,7 +55,7 @@ technique Technique0
     pass Pass0
     {
         Zenable  = true;
-        CullFaceEnable = false;
+        CullFaceEnable = true;
 
         VertexShader = compile arbvp1 myvs();
         PixelShader  = compile arbfp1 myps();

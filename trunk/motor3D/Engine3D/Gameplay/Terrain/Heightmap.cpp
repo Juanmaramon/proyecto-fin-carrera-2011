@@ -13,8 +13,7 @@ bool Heightmap::LoadRawFile(char *filename,int size){
 	file = fopen(filename,"rb");
 
 	// Check to see if we found the file and could open it
-	if (file == NULL)	
-	{
+	if (file == NULL){
 		// Display our error message and stop the function
 		// printf("Can't find the height map!");
 		return false;
@@ -28,14 +27,30 @@ bool Heightmap::LoadRawFile(char *filename,int size){
 	int result = ferror(file);
 
 	// Check if we received an error.
-	if (result)
-	{
-		// printf("Can't get data from height map file!");
+	if (result){
 		return false;
 	}
 
 	// Close the file.
 	fclose(file);
+
+	// Subdivide el heightmap en varias submallas
+	int idx = 0;
+	for (int nMesh = 0; nMesh < NSUBMESH; nMesh++){
+		for (int i = 0; i < CHUNK; i++){
+			subheightmaps[nMesh][i] = HeightMap[idx];
+			idx++;
+		}
+	}
+
+/*	for (int nMesh = 0; nMesh < NSUBMESH; nMesh++){
+		for (int i = 0; i < BULLET_MAP_SIZE; i++ ){
+			for (int j = 0; j < BULLET_MAP_SIZE; j++ ){
+				subheightmaps[ nMesh ][ i + (j * BULLET_MAP_SIZE) ] = Height( i, j );
+				//smallHeightMap[ i + (j * BULLET_MAP_SIZE) ] = Height( i, j );
+			}
+		}
+	}*/
 
 	return true;
 }
@@ -58,7 +73,12 @@ int Heightmap::Height(int X, int Y){
 	// otherwise it's the opposite.  Now that we have the correct index,
 	// we will return the height in that index.
 
-	return HeightMap[x + (y * MAP_SIZE)];	// Index into our height array and return the height
+	//return HeightMap[x + (y * MAP_SIZE)];	// Index into our height array and return the height
+
+	int submesh = (x + (y * MAP_SIZE)) / (CHUNK);
+	int idx = (x + (y * MAP_SIZE)) % (CHUNK);
+
+	return subheightmaps[submesh][idx];
 }
 
 // UV mapping
@@ -96,16 +116,12 @@ bool Heightmap::Load(){
 	tex_detail = cTextureManager::Get().LoadResource("detail", "./Data/Scene/images/mid1.tga");	
 	assert(tex_detail.IsValidHandle());
 	
-	//Texture 3
-//	tex_water = cTextureManager::Get().LoadResource("water", "./Data/Scene/images/water.jpg");
-//	assert(tex_water.IsValidHandle());
-	//move = 0.0f;
-	
 	btScalar minHeight, maxHeight;
 
 	//Create display list
 	Create(minHeight, maxHeight);
 
+	// Crea submalla para Bullet
 	for (int i = 0; i < BULLET_MAP_SIZE; i++ ){
 		for (int j = 0; j < BULLET_MAP_SIZE; j++ ){
 			smallHeightMap[ i + (j * BULLET_MAP_SIZE) ] = Height( i, j );
@@ -115,8 +131,7 @@ bool Heightmap::Load(){
 	// Creates physics over the terrain data
 	bool flipQuadEdges = false;													// width, height, *heightmapData, scale, minHeight, maxHeight, upAxis, heightMapDatatype, flipQuadEdges 
 	int upAxis = 1;
-	//btHeightfieldTerrainShape * heightfieldShape = new btHeightfieldTerrainShape(MAP_SIZE, MAP_SIZE, HeightMap, s_gridHeightScale1, minHeight, maxHeight, upAxis, PHY_UCHAR, flipQuadEdges);
-	btHeightfieldTerrainShape * heightfieldShape = new btHeightfieldTerrainShape(BULLET_MAP_SIZE, BULLET_MAP_SIZE, /*HeightMap*/ smallHeightMap, s_gridHeightScale1, minHeight, maxHeight, upAxis, PHY_UCHAR, flipQuadEdges);
+	btHeightfieldTerrainShape * heightfieldShape = new btHeightfieldTerrainShape(BULLET_MAP_SIZE, BULLET_MAP_SIZE, smallHeightMap, s_gridHeightScale, minHeight, maxHeight, upAxis, PHY_UCHAR, flipQuadEdges);
 	assert(heightfieldShape);
 
 	// scale the shape
@@ -125,12 +140,11 @@ bool Heightmap::Load(){
 
 	// stash this shape away
 	cPhysics::Get().getCollisionShapes().push_back(heightfieldShape);
-	//m_collisionShapes.push_back(heightfieldShape);
 
 	// create ground object
 	float mass = 0.0;
    
-	btRigidBody* body = cPhysics::Get().GetNewBody(heightfieldShape, mass, cVec3(-359, -140, -916));	
+	btRigidBody* body = cPhysics::Get().GetNewBody(heightfieldShape, mass, cVec3(-358.5f, -140, -918.5f));	
 
 	return true;
 }
@@ -147,8 +161,6 @@ void Heightmap::Create(btScalar& minHeight, btScalar& maxHeight){
 	detail_level = 32;
 	disp_list_id = glGenLists(1);
 	glNewList(disp_list_id, GL_COMPILE);
-
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	// Bind the terrain texture to our terrain
 	glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -294,7 +306,6 @@ void Heightmap::Create(btScalar& minHeight, btScalar& maxHeight){
 
 void Heightmap::Render(){
 	glPushMatrix();
-//	glScalef(100.0f,100.0f,100.0f);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);	
 	glTranslatef(/*-BULLET_MAP_SIZE * 0.5f*/ -390.f, -140.f, -950.f /*-BULLET_MAP_SIZE * 0.5f*/); 
 	glEnable(GL_TEXTURE_2D);

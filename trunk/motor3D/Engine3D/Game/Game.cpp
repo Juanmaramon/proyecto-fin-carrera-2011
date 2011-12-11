@@ -55,6 +55,8 @@ bool cGame::Init()
 
 			// Resetea color de fondo
 			glClearColor(1.0f, 0.9f, 0.7f, 1.0f);
+			// Ocultar geometria no mostrada
+			glEnable(GL_CULL_FACE);
 
 			//Se inicializa la clase que contendrá la lista de personajes.
 			lbResult = cCharacterManager::Get().Init();
