@@ -45,10 +45,12 @@ void cPhysics::Init( ){
 	GetNewBody( lpGroundShape, 0.0f, cVec3( -20.0f, 0.0f, 0.0f ));
 	GetNewBody( lpGroundShape, 0.0f, cVec3( 20.0f, 0.0f, 0.0f ));
 	GetNewBody( lpGroundShape, 0.0f, cVec3( 0.0f, 0.0f, -20.0f ));
-	GetNewBody( lpGroundShape, 0.0f, cVec3( 0.0f, 0.0f, 20.0f ));	
+	GetNewBody( lpGroundShape, 0.0f, cVec3( 0.0f, 0.0f, 20.0f ));	*/
+
+
 	btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0,1,0),1);
 	mapCollisionShapes.push_back(groundShape);
-	GetNewBody( groundShape, 0.0f, cVec3( 0.0f, 0.0f, 0.0f ));	*/
+	GetNewBody( groundShape, 0.0f, cVec3( 0.0f, -5.0f, 0.0f ));	
 
 	// Draws debug info of bullet
 	cPhysicsDebugDraw::Get( ).setDebugMode( cPhysicsDebugDraw::DBG_DrawWireframe );
@@ -110,19 +112,33 @@ btCollisionShape* cPhysics::GetNewBoxShape( const cVec3& lHalfSize ){
 	return lShape;
 }
 
-btRigidBody* cPhysics::GetNewBody( btCollisionShape* lpShape, float lfMass, const cVec3& lPosition ){
+btRigidBody* cPhysics::GetNewBody( btCollisionShape* lpShape, float lfMass, const cVec3& lPosition, float lRotation){
 	/// Create Dynamic Objects
 	btTransform lStartTransform;
 	lStartTransform.setIdentity();
 
-	//rigidbody is dynamic if and only if mass is non zero, otherwise 
-	static bool lbIsDynamic = (lfMass != 0.f);
+	//rigidbody is dynamic if and only if mass is non zero, otherwise static
+	bool lbIsDynamic = (lfMass != 0.f);
 	btVector3 lLocalInertia( 0, 0, 0);
 
 	if ( lbIsDynamic ){
 		lpShape->calculateLocalInertia(lfMass,lLocalInertia);
 	}
-	lStartTransform.setOrigin( Local2Bullet( lPosition ) );
+
+	cMatrix lTransMatrix, lTransform;
+	lTransMatrix.LoadTranslation(lPosition);
+	lTransform = lTransMatrix;
+
+	if (lRotation != 0.0f){
+		lTransform.LoadIdentity();
+			
+		cMatrix lRotMatrix;
+		lRotMatrix.LoadIdentity();
+		lRotMatrix.LoadRotation(cVec3(0.f, 1.f, 0.f), lRotation);
+		lTransform = lRotMatrix * lTransMatrix;
+	}
+	lStartTransform = Local2Bullet(lTransform);
+	//lStartTransform.setOrigin( Local2Bullet( lPosition ) );
 
 	//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
 	btDefaultMotionState* lpMotionState = new btDefaultMotionState( lStartTransform );

@@ -11,4 +11,6 @@
 /// Constante PI/2
 #define HALF_PI  (PI / 2.0f )
 
+#define C_720PI (720.0f / PI)
+
 #endif
