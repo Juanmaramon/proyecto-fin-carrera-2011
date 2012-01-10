@@ -52,6 +52,7 @@ bool Heightmap::LoadRawFile(char *filename,int size){
 		}
 	}*/
 
+
 	return true;
 }
 
@@ -133,6 +134,8 @@ bool Heightmap::Load(){
 	int upAxis = 1;
 	btHeightfieldTerrainShape * heightfieldShape = new btHeightfieldTerrainShape(BULLET_MAP_SIZE, BULLET_MAP_SIZE, smallHeightMap, s_gridHeightScale, minHeight, maxHeight, upAxis, PHY_UCHAR, flipQuadEdges);
 	assert(heightfieldShape);
+
+	heightfieldShape->setUseDiamondSubdivision(true);
 
 	// scale the shape
 	//btVector3 localScaling = getUpVector(upAxis, s_gridSpacing1, 1.0);

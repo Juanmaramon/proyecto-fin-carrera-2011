@@ -174,12 +174,14 @@ bool cGame::Init()
 			mObject.SetDrawOffsetMatrix( lTranslation );
 			mObject.SetKinematic( );	
 
-			CharacterPos::Get().Init(cVec3(0.f, 0.f, 15.f), 329.9f, 10, 0.5f);
+			CharacterPos::Get().Init(cVec3(0.f, 0.f, 15.f), C_720PI, 10, 0.5f);
 		
 			// Estamos en modo juego, no depuración
 			mbInGame = true;
 			// Se inicializa en modo rasterizacion solida
 			mbRasterizationMode = true;
+			// Inicializacion del vehiculo
+			mVehicle.initPhysics();
 		} else {
 			//Si algo falla se libera la ventana.
 			cWindow::Get().Deinit();
@@ -234,26 +236,37 @@ void cGame::Update( float lfTimestep )
 	if (mbInGame){
 		mGodCamera.ResetYawPitch();
 		if ( lbmoveFront ) {
-			CharacterPos::Get().MoveFront();
+			//CharacterPos::Get().MoveFront();
+			mVehicle.MoveForward(lfTimestep);
 		}
 		else if ( lbmoveBack ){
-			CharacterPos::Get().MoveBack();
+			//CharacterPos::Get().MoveBack();
+			mVehicle.Break(lfTimestep);
 		}
 		if ( lbmoveLeft ){
-			CharacterPos::Get().TurnLeft();
+			//CharacterPos::Get().TurnLeft();
+			mVehicle.SteeringLeft(lfTimestep);
 		}
 		else if ( lbmoveRight ){
-			CharacterPos::Get().TurnRight();
+			//CharacterPos::Get().TurnRight();
+			mVehicle.SteeringRight(lfTimestep);
 		}
 
 		// Actualizacion de cámara de juego
-		float lfDistance = 5.f;
-		cVec3 vVector = CharacterPos::Get().GetCharacterPosition() - CharacterPos::Get().GetFront() * lfDistance;
+		float lfDistance = 8.f;
+		//cVec3 vVector = CharacterPos::Get().GetCharacterPosition() - CharacterPos::Get().GetFront() * lfDistance;
 
-		m3DCamera.SetLookAt( cVec3(vVector.x,
+		/*m3DCamera.SetLookAt( cVec3(vVector.x,
 								   vVector.y + 1.5f,
 								   vVector.z),
 								   CharacterPos::Get().GetCharacterPosition(), 
+								   cVec3(0.0f, 1.f, 0.f) );*/
+		cVec3 vVector = mVehicle.GetChasisPos() - mVehicle.GetChasisRot() * lfDistance;
+
+		m3DCamera.SetLookAt( cVec3(vVector.x,
+								   vVector.y + 3.f,
+								   vVector.z),
+								   mVehicle.GetChasisPos(), 
 								   cVec3(0.0f, 1.f, 0.f) );
 	// Modo Godmode	
 	} else {
@@ -277,6 +290,8 @@ void cGame::Update( float lfTimestep )
 			mGodCamera.MoveYawPitch(lfYaw, lfPitch, lfTimestep);
 		}
 	}
+
+	mVehicle.Update();
 
 	mObject.SetPosition(CharacterPos::Get().GetCharacterPosition(), CharacterPos::Get().GetYaw());
 
@@ -410,6 +425,8 @@ void cGame::Render()
 		maSphereObjects[luiIndex].Render();	
 	}		
 
+	mVehicle.renderme();
+
 	// 3.3) Render of the skeleton mesh
 	// -------------------------------------------------------------
 	cMatrix lRotation, lCurrPos;
@@ -465,7 +482,7 @@ bool cGame::LoadResources( void )
 bool cGame::Deinit()
 {
 	//Se deinicializa en el orden inverso a la inicialización:
-
+	mVehicle.~Vehicle();
 	cMaterialManager::Get().Deinit();
 
 	//Se libera el manejador de escenas.

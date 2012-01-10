@@ -16,7 +16,8 @@ public:
 	// Creates basic shapes for collisions test
 	btCollisionShape* GetNewSphereShape( float lfRadius );
 	btCollisionShape* GetNewBoxShape( const cVec3& lHalfSize );
-	btRigidBody* GetNewBody( btCollisionShape* lpShape, float lfMass, const cVec3& lPosition );
+	btRigidBody* GetNewBody( btCollisionShape* lpShape, float lfMass, const cVec3& lPosition, float lRotation = 0.0f );
+	btRigidBody* GetNewBody( btCollisionShape* lpShape, float lfMass, const cMatrix& lTranslation );
 	// New for terrain generator
 	btAlignedObjectArray<btCollisionShape*>  getCollisionShapes(){ return mapCollisionShapes; }
 
@@ -29,6 +30,9 @@ public:
 
 	// Draws debug info
 	void Render( );
+
+	// Devuelve mundo Bullet
+	btDiscreteDynamicsWorld* GetBulletWorld(){ return mpWorld; };
 
 private:
 	// Bullet world

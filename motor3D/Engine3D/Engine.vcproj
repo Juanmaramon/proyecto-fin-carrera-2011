@@ -712,6 +712,18 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="Vehicle"
+				>
+				<File
+					RelativePath=".\Gameplay\Vehicle\Vehicle.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Gameplay\Vehicle\Vehicle.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="LoadXML"
