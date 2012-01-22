@@ -52,5 +52,9 @@ int WINAPI WinMain(
 	   }
 	   //Se finaliza el juego.
 	   cGame::Get().Deinit();  
+	   char buff[255];
+	   int exist_leaks = _CrtDumpMemoryLeaks();
+	   sprintf(buff, "Existen leaks de memoria? %d\n", exist_leaks);
+	   OutputDebugStr(buff);
    }
 }

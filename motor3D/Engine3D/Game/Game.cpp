@@ -182,6 +182,8 @@ bool cGame::Init()
 			mbRasterizationMode = true;
 			// Inicializacion del vehiculo
 			mVehicle.initPhysics();
+			// Inicializa skybox
+			mSkybox.Init();
 		} else {
 			//Si algo falla se libera la ventana.
 			cWindow::Get().Deinit();
@@ -391,13 +393,10 @@ void cGame::Render()
 	lWorld.LoadIdentity();
 	cGraphicManager::Get().SetWorldMatrix(lWorld);
 
-	//Desactivamos la textura porque aún no tenemos materiales asignados a las mallas de la escena.
-//	glDisable(GL_TEXTURE_2D);
-	//Para renderizar la escena llamaremos al render de la escena a través de mScene (manejador de la escena, de tipo cResourceHandle).
-	//((cScene *)mScene.GetResource())->Render();
-//	glEnable(GL_TEXTURE_2D);
+	// 3.0) Pinta el skybox
+	mSkybox.Render();
 
-	// 3.0) Display the terrain mesh.
+	// 3.1) Display the terrain mesh.
 	mHeightmap.Render();
 
 	lWorld.LoadTranslation(cVec3(0.f, 0.f, 0.f));
@@ -413,11 +412,10 @@ void cGame::Render()
 	lWorld.LoadIdentity();	
 	cGraphicManager::Get().SetWorldMatrix(lWorld);
 
-	// 3.1) Se dibujan los personajes:
+	// 3.2) Se dibujan los personajes:
 	cCharacterManager::Get().Render();
 
-
-	// 3.2) Draws debug info of bullet
+	// 3.3) Draws debug info of bullet
 	cPhysics::Get().Render();	
 
 	// Render physic objects
@@ -427,7 +425,7 @@ void cGame::Render()
 
 	mVehicle.renderme();
 
-	// 3.3) Render of the skeleton mesh
+	// 3.4) Render of the skeleton mesh
 	// -------------------------------------------------------------
 	cMatrix lRotation, lCurrPos;
 	lCurrPos.LoadIdentity();

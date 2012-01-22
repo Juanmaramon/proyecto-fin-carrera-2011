@@ -12,6 +12,7 @@
 #include "..\Gameplay\CharacterPos\CharacterPos.h"
 #include "..\Graphics\GodCamera.h"
 #include "..\Gameplay\Vehicle\Vehicle.h"
+#include "..\Gameplay\Scene\Skybox.h"
 
 //Clase que hace uso del Patrón Singleton definido en Singleton.h, para iniciar, actualizar, dibujar
 // y finalizar el juego
@@ -47,6 +48,8 @@ protected:
 		GodCamera mGodCamera;
 		// Vehiculo 
 		Vehicle mVehicle;
+		// Skybox
+		Skybox mSkybox;
 
 public:
 	

@@ -115,6 +115,7 @@ void Vehicle::initPhysics(){
 	float mass = 800.f;
 	
 	m_carChassis = cPhysics::Get().GetNewBody(m_compound, mass, cVec3(0.f, 0.f, 0.f), 329.9f); //chassisShape
+
 	//m_carChassis->setDamping(0.2,0.2);
 	
 	m_wheelShape = new btCylinderShapeX(btVector3(wheelWidth,wheelRadius,wheelRadius));
@@ -181,7 +182,7 @@ void Vehicle::ResetVehicleParams(){
 	cMatrix lTransMatrix, lRotMatrix, lTransform;
 	lTransMatrix.LoadTranslation(cVec3(0.f, 0.f, 0.f));
 	lRotMatrix.LoadIdentity();
-	// TODO: pasar a radianes el angulo
+
 	lRotMatrix.LoadRotation(cVec3(0.f, 1.f, 0.f), C_720PI);
 	lTransform = lRotMatrix * lTransMatrix;
 	m_carChassis->setWorldTransform(cPhysics::Get().Local2Bullet(lTransform));
@@ -278,7 +279,11 @@ cVec3 Vehicle::GetChasisPos(void){
 }
 
 cVec3 Vehicle::GetChasisRot(){
-	return  cVec3(   sinf(gVehicleSteering),  0.0f, cosf(gVehicleSteering) ); 
+	btTransform chassisWorldTrans;
+	m_carChassis->getMotionState()->getWorldTransform(chassisWorldTrans);
+	cMatrix lmChasisTrans = cPhysics::Get().Bullet2Local(chassisWorldTrans);
+
+	return lmChasisTrans.GetFront();
 }
 
 float Vehicle::getEngineForce(void){
