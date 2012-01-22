@@ -667,6 +667,14 @@
 					RelativePath=".\Gameplay\Scene\SceneManager.h"
 					>
 				</File>
+				<File
+					RelativePath=".\Gameplay\Scene\Skybox.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Gameplay\Scene\Skybox.h"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="Object"

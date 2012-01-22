@@ -54,7 +54,7 @@ void GodCamera::MoveYawPitch(float lfYaw, float lfPitch, float lfTimestep){
 		mOld_pos.y = lfYaw;
 		mOld_pos.x = lfPitch;
 	}
-	char buf[250];
-	sprintf(buf, " \n  rotationX(%2.2f) rotationY(%2.2f) Pitch(%2.2f), Yaw(%2.2f)\n", lfRotationX, lfRotationY, lfPitch, lfYaw);
-	OutputDebugStr(buf);
+	//char buf[250];
+	//sprintf(buf, " \n  rotationX(%2.2f) rotationY(%2.2f) Pitch(%2.2f), Yaw(%2.2f)\n", lfRotationX, lfRotationY, lfPitch, lfYaw);
+	//OutputDebugStr(buf);
 }
