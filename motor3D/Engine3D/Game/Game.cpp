@@ -30,9 +30,11 @@ bool cGame::Init()
 	mProperties.macApplicationName = "Proyecto fin master";
 	mProperties.mbFullscreen = false;
 	mProperties.muiBits = 16;
-	mProperties.muiWidth = 640;
-	mProperties.muiHeight = 480;	
-	
+//	mProperties.muiWidth = 640;
+	mProperties.muiWidth = 1024;
+//	mProperties.muiHeight = 480;	
+	mProperties.muiHeight = 768;
+
 	//Se inicializa el objeto ventana con la propiedades establecidas:
     bool lbResult = cWindow::Get().Init( mProperties );
 		
@@ -47,7 +49,7 @@ bool cGame::Init()
 			// Inicializa camara godmode
 			mGodCamera.Init();
 			float lfAspect = (float)mProperties.muiWidth/(float)mProperties.muiHeight;
-			m3DCamera.SetPerspective(45.0f, lfAspect,0.1f,1000.0f);
+			m3DCamera.SetPerspective(45.0f, lfAspect,0.1f,3000.0f);
 			mGodCamera.SetPerspective( 45.0f, lfAspect, 0.1f, 10000.0f );
 	
 			//Se aleja la cámara para ver bien la escena que vamos a cargar posteriormente.
