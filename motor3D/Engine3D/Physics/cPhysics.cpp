@@ -53,7 +53,9 @@ void cPhysics::Init( ){
 	GetNewBody( groundShape, 0.0f, cVec3( 0.0f, -5.0f, 0.0f ));	
 
 	// Draws debug info of bullet
-	cPhysicsDebugDraw::Get( ).setDebugMode( cPhysicsDebugDraw::DBG_DrawWireframe );
+	//cPhysicsDebugDraw::Get( ).setDebugMode( cPhysicsDebugDraw::DBG_DrawWireframe );
+	cPhysicsDebugDraw::Get( ).setDebugMode( cPhysicsDebugDraw::DBG_NoDebug );
+	
 	mpWorld->setDebugDrawer( &cPhysicsDebugDraw::Get( ) );
 }
 

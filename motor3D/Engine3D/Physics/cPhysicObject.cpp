@@ -32,14 +32,14 @@ void cPhysicObject::SetKinematic( ){
 	mpPhysicBody->setActivationState( DISABLE_DEACTIVATION );
 }
 
-void cPhysicObject::SetPosition( const cVec3 &lPosition, float lYaw ){
+void cPhysicObject::SetPosition( const cVec3 &lPosition, float lYaw, cVec3 lAxis ){
 	mPosition = lPosition;
 	cMatrix lTranslationMatrix;
 	lTranslationMatrix.LoadIdentity( );
 	lTranslationMatrix.SetPosition( lPosition );
 	// Rotation matrix
 	cMatrix lRotationMatrix;
-	lRotationMatrix.LoadRotation(cVec3(0.f, 1.f, 0.f), lYaw);
+	lRotationMatrix.LoadRotation(lAxis, lYaw);
 	// Change our own Matrix for drawing purposes
 	SetWorldMatrix( lRotationMatrix * lTranslationMatrix );
 	// Inform Bullet of the new Position

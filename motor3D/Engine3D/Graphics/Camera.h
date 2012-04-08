@@ -3,7 +3,9 @@
 #ifndef Camera_H
 #define Camera_H
 
-#include "..\MathLib\MathLib.h"
+//#include "..\MathLib\MathLib.h"
+#include "..\MathLib\Vec\Vec3.h"
+#include "..\MathLib\Matrix\Matrix.h"
 
 class cCamera{
    public:

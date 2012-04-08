@@ -16,6 +16,13 @@
 #include "..\Character\Behaviour\BehaviourManager.h"
 #include "..\Lua\LuaFunctions.h"
 #include "..\LuaManager\cLuaManager.h"
+#include "..\Physics\cPhysicsDebugDraw.h"
+
+/*#include "..\Gameplay\Terrain\texture.cpp"
+#include "..\Gameplay\Terrain\Map.h"
+#include "..\Gameplay\Terrain\MapTexture.h"
+#include "..\Gameplay\Terrain\Entity.h"
+#include "..\Gameplay\Terrain\World.h"*/
 
 //Para configurar el InputManager hay que llamar a su Init (en cGame::Init)
 //pasándole la tabla kaActionMapping (de InputConfiguration.cpp).
@@ -49,7 +56,7 @@ bool cGame::Init()
 			// Inicializa camara godmode
 			mGodCamera.Init();
 			float lfAspect = (float)mProperties.muiWidth/(float)mProperties.muiHeight;
-			m3DCamera.SetPerspective(45.0f, lfAspect,0.1f,3000.0f);
+			m3DCamera.SetPerspective(45.0f, lfAspect,0.1f, 3000.0f);
 			mGodCamera.SetPerspective( 45.0f, lfAspect, 0.1f, 10000.0f );
 	
 			//Se aleja la cámara para ver bien la escena que vamos a cargar posteriormente.
@@ -85,10 +92,16 @@ bool cGame::Init()
 			cPhysics::Get().Init();
 
 			//Se inicializa la clase que gestiona la texturas indicando que habrá 1, por ejemplo.
-			cTextureManager::Get().Init(20);
+			cTextureManager::Get().Init(30);
 
 			// Terrain object
-			if (!mHeightmap.Load()) OutputDebugString("Heightmap terrain load error!");
+			mHeightmap.Load();
+			// Mundo del terreno
+//			World::Get().Init();
+			// Texturas del mapa de altura
+//			HeightmapTexture::Get().Init();
+			// Entidad abstracta para el terreno
+//			mEntity.Init();
 
 			//Se inicializa la clase que gestiona los materiales.
 			cMaterialManager::Get().Init(10);
@@ -114,18 +127,55 @@ bool cGame::Init()
 			mFont.Init("./Data/Fonts/Test1.fnt");
 
 			//Se inicializa el gestor de mallas: habrá 4 mallas en la escena (mirar ./Data/Scene/) + Skeletal mesh.
-			cMeshManager::Get().Init(5);
+			cMeshManager::Get().Init(20);
 
 			//Se inicializa el gestor de escenas.
-			cSceneManager::Get().Init(10);   
+			cSceneManager::Get().Init(20);   
 
 			//Se carga la escena.
 			//mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/dragonsmall.DAE" ); 		
-			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/duck_triangulate.dae" ); 
-			//mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/plane.DAE" );
+			//*mDuck = cSceneManager::Get().LoadResource( "Duck", "./Data/Scene/duck_triangulate.dae" ); 
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/mad_drive_escombros_cactus.dae" ); 
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/mad_drive_escombros_carretera.dae" );
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/mad_drive_escombros_matorral.dae" ); 
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/mad_drive_escombros_palmera.dae" ); 
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/mad_drive_escombros_tronco.dae" ); 
+			mMusExt = cSceneManager::Get().LoadResource( "Mustang_exterior", "./Data/Scene/mustang_exterior1.dae" ); 			
+			mMusInt = cSceneManager::Get().LoadResource( "Mustang_interior", "./Data/Scene/mustang_interior.dae" ); 
+			mMusMet = cSceneManager::Get().LoadResource( "Mustang_metralleta", "./Data/Scene/mustang_metralleta.dae" ); 
+			mMusNeu = cSceneManager::Get().LoadResource( "Mustang_neumatico", "./Data/Scene/mustang_neumatico.dae" ); 
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo1_rueda.dae" );
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo1_arma.dae" );
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo1_exterior.dae" );
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo2.dae" );
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo1_exterior.dae" );
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo2_arma.dae" );
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo2_rueda.dae" );
+//		    mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/mad_drive_escombros_ruina.dae" );
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/combustible.dae" );
+			mItemCongelacion = cSceneManager::Get().LoadResource( "Item_congelacion", "./Data/Scene/especial_congelacion.dae" );
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/especial_invencibilidad.dae" );
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/especial_superturbo.dae" );
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/municion.dae" );
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo1_destruido_arma.dae" );
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo1_destruido_exterior.dae" );
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo2_destruido_arma.dae" );
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo2_destruido_exterior.dae" );
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/mustang_destruido_exterior.dae" );
+			//mScene1 = cSceneManager::Get().LoadResource( "TestLevel1", "./Data/Scene/mustang_destruido_interior.dae" );
+			
+			// Loads skeleton 
+		//	cResourceHandle mustang_mesh = cMeshManager::Get().LoadResource("testlevel1", "./Data/Scene/mustang_destruido_interior.dae");
+
+			/*if (!((cScene *)mScene.GetResource())->Init("TestLevel1", "./Data/Scene/mustang_destruido_interior.dae")){
+				OutputDebugStr("Error loading object!");
+			}*/
+
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/plane.DAE" );
 
 			// Physics object in the game
-			cPhysicObject mModelObject = *((cPhysicObject*) ((cScene *)mScene.GetResource())->getSubObject( 0 ));
+			cPhysicObject mModelObject = *((cPhysicObject*) ((cScene *)mItemCongelacion.GetResource())->getSubObject( 0 ));
+			//cPhysicObject mModelObject = *((cPhysicObject*) ((cScene *)mScene.GetResource())->getSubObject( 1 ));
 
 			cMatrix lScaleMatrix, lOffsetMatrix;
 
@@ -183,7 +233,14 @@ bool cGame::Init()
 			// Se inicializa en modo rasterizacion solida
 			mbRasterizationMode = true;
 			// Inicializacion del vehiculo
-			mVehicle.initPhysics();
+			//mVehicle.initPhysics();
+			mTire = *((cObject*) ((cScene *)mMusNeu.GetResource())->getSubObject(0));
+			mExt = *((cObject*) ((cScene *)mMusExt.GetResource())->getSubObject(0));
+			mInt = *((cObject*) ((cScene *)mMusInt.GetResource())->getSubObject(0));
+			mMet = *((cObject*) ((cScene *)mMusMet.GetResource())->getSubObject(0));
+
+//			mTire.SetScaleMatrix(lScaleMatrix);
+			mMustang.Init(&mExt, &mInt, &mMet, &mTire);
 			// Inicializa skybox
 			mSkybox.Init();
 		} else {
@@ -241,19 +298,23 @@ void cGame::Update( float lfTimestep )
 		mGodCamera.ResetYawPitch();
 		if ( lbmoveFront ) {
 			//CharacterPos::Get().MoveFront();
-			mVehicle.MoveForward(lfTimestep);
+			//mVehicle.MoveForward(lfTimestep);
+			mMustang.MoveForward(lfTimestep);
 		}
 		else if ( lbmoveBack ){
 			//CharacterPos::Get().MoveBack();
-			mVehicle.Break(lfTimestep);
+			//mVehicle.Break(lfTimestep);
+			mMustang.Break(lfTimestep);	
 		}
 		if ( lbmoveLeft ){
 			//CharacterPos::Get().TurnLeft();
-			mVehicle.SteeringLeft(lfTimestep);
+			//mVehicle.SteeringLeft(lfTimestep);
+			mMustang.SteeringLeft(lfTimestep);
 		}
 		else if ( lbmoveRight ){
 			//CharacterPos::Get().TurnRight();
-			mVehicle.SteeringRight(lfTimestep);
+			//mVehicle.SteeringRight(lfTimestep);
+			mMustang.SteeringRight(lfTimestep);
 		}
 
 		// Actualizacion de cámara de juego
@@ -265,12 +326,19 @@ void cGame::Update( float lfTimestep )
 								   vVector.z),
 								   CharacterPos::Get().GetCharacterPosition(), 
 								   cVec3(0.0f, 1.f, 0.f) );*/
-		cVec3 vVector = mVehicle.GetChasisPos() - mVehicle.GetChasisRot() * lfDistance;
+		//cVec3 vVector = mVehicle.GetChasisPos() - mVehicle.GetChasisRot() * lfDistance;
+		cVec3 vVector = mMustang.GetVehicleBullet()->GetChasisPos() - mMustang.GetVehicleBullet()->GetChasisRot() * lfDistance;
+
+		/*m3DCamera.SetLookAt( cVec3(vVector.x,
+								   vVector.y + 3.f,
+								   vVector.z),
+								   mVehicle.GetChasisPos(), 
+								   cVec3(0.0f, 1.f, 0.f) );*/
 
 		m3DCamera.SetLookAt( cVec3(vVector.x,
 								   vVector.y + 3.f,
 								   vVector.z),
-								   mVehicle.GetChasisPos(), 
+								   mMustang.GetVehicleBullet()->GetChasisPos(), 
 								   cVec3(0.0f, 1.f, 0.f) );
 	// Modo Godmode	
 	} else {
@@ -295,7 +363,8 @@ void cGame::Update( float lfTimestep )
 		}
 	}
 
-	mVehicle.Update();
+	//mVehicle.Update();
+	mMustang.Update();
 
 	mObject.SetPosition(CharacterPos::Get().GetCharacterPosition(), CharacterPos::Get().GetYaw());
 
@@ -308,10 +377,15 @@ void cGame::Update( float lfTimestep )
 	//Se actualizan los personajes:
 	cCharacterManager::Get().Update(lfTimestep);
 
+//	((cScene *)mScene.GetResource())->Update(lfTimestep);
+
 	// Update physic objects
 	for ( unsigned int luiIndex = 0; luiIndex < 10; ++luiIndex) {
 		maSphereObjects[luiIndex].Update(lfTimestep);
 	}
+
+	//((cScene *)mMusExt.GetResource())->Update(lfTimestep);
+	((cScene *)mMusNeu.GetResource())->Update(lfTimestep);
 
 	// Check if the animation keys (stop/start) are pressed
 	cSkeletalMesh* lpSkeletonMesh =(cSkeletalMesh*)mSkeletalMesh.GetResource();
@@ -383,10 +457,13 @@ void cGame::Render()
 		cGraphicManager::Get().ActivateCamera( &mGodCamera );
 
 	// Modo de rasterizacion solida/wireframe
-	if (mbRasterizationMode)
+	if (mbRasterizationMode){
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	else
+		cPhysicsDebugDraw::Get( ).setDebugMode( cPhysicsDebugDraw::DBG_NoDebug );
+	} else {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		cPhysicsDebugDraw::Get( ).setDebugMode( cPhysicsDebugDraw::DBG_DrawWireframe );
+	}
 
 	// 3) Renderizado de Geometría 3D sólida
 	// -------------------------------------------------------------
@@ -400,6 +477,7 @@ void cGame::Render()
 
 	// 3.1) Display the terrain mesh.
 	mHeightmap.Render();
+//	mEntity.EntityRender();
 
 	lWorld.LoadTranslation(cVec3(0.f, 0.f, 0.f));
 	cGraphicManager::Get().SetWorldMatrix(lWorld);
@@ -418,14 +496,16 @@ void cGame::Render()
 	cCharacterManager::Get().Render();
 
 	// 3.3) Draws debug info of bullet
-	cPhysics::Get().Render();	
+	cPhysics::Get().Render();
 
 	// Render physic objects
-	for ( unsigned int luiIndex = 0; luiIndex < 10; ++luiIndex) {
+/*	for ( unsigned int luiIndex = 0; luiIndex < 10; ++luiIndex) {
 		maSphereObjects[luiIndex].Render();	
-	}		
+	}	*/	
 
-	mVehicle.renderme();
+	//mVehicle.renderme();
+//	mMustang.GetVehicleBullet()->renderme();
+	mMustang.Render();
 
 	// 3.4) Render of the skeleton mesh
 	// -------------------------------------------------------------
@@ -436,7 +516,7 @@ void cGame::Render()
 
 	cGraphicManager::Get().SetWorldMatrix(lRotation * lCurrPos);
 
-	mObject.Render();
+//	mObject.Render();
 
 	lWorld.LoadIdentity();	
 	cGraphicManager::Get().SetWorldMatrix(lWorld);
@@ -457,10 +537,10 @@ void cGame::Render()
 	//Se dibujan algunas cadenas de texto.
 	glEnable(GL_TEXTURE_2D);
 	mFont.SetColour( 1.0f, 0.0f, 0.0f );
-	mFont.Write(0,200,0, "Año Totó pingüino() ¡!¿?", 0, FONT_ALIGN_CENTER);
+	//mFont.Write(0,200,0, "Año Totó pingüino() ¡!¿?", 0, FONT_ALIGN_CENTER);
 	 
 	mFont.SetColour( 0.0f, 1.0f, 1.0f );
-	mFont.WriteBox(100,100,0,100, "Esto es un test \nmultilinea", 0, FONT_ALIGN_CENTER);	
+	//mFont.WriteBox(100,100,0,100, "Esto es un test \nmultilinea", 0, FONT_ALIGN_CENTER);	
 
 
 	 
@@ -482,7 +562,9 @@ bool cGame::LoadResources( void )
 bool cGame::Deinit()
 {
 	//Se deinicializa en el orden inverso a la inicialización:
-	mVehicle.~Vehicle();
+	//mVehicle.~Vehicle();
+	mMustang.Deinit();
+
 	cMaterialManager::Get().Deinit();
 
 	//Se libera el manejador de escenas.

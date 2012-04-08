@@ -3,9 +3,13 @@
 
 
 ///	Constante PI 
+#ifndef PI
 #define PI  (3.1415926535897932384626433832795f)
+#endif
 ///	Constante 2 * PI 
+#ifndef PI2
 #define PI2 (6.283185307179586476925286766559f)
+#endif
 ///	Constante Epsilon: Un valor suficientemente peque&ntilde;o como para ser despreciable 
 #define EPSILON (0.00001f)
 /// Constante PI/2
