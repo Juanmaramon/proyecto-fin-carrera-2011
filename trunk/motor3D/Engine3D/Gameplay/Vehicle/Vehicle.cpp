@@ -16,11 +16,11 @@ const int maxOverlap = 65535;
 float	gEngineForce = 0.f;
 float	gBreakingForce = 0.f;
 
-float	maxEngineForce = 1500.f; // 100000.f;//this should be engine/velocity dependent
-float	maxBreakingForce = 100.f; // 10000.f;
+float	maxEngineForce = 100000.f; //1500.f; //this should be engine/velocity dependent
+float	maxBreakingForce = 8000.f;  // 100.f; 
 
 float	gVehicleSteering = 0.f;
-float	steeringIncrement = 0.04f;
+float	steeringIncrement =  1.0f; //0.04f;
 float	steeringClamp = 0.3f;
 
 float	wheelRadius =  0.35f * PHYSCAR_SCALE;	//** 0.5f;
@@ -183,7 +183,7 @@ void Vehicle::ResetVehicleParams(){
 	lTransMatrix.LoadTranslation(cVec3(0.f, 0.f, 0.f));
 	lRotMatrix.LoadIdentity();
 
-	lRotMatrix.LoadRotation(cVec3(0.f, 1.f, 0.f), C_720PI);
+	lRotMatrix.LoadRotation(cVec3(0.f, 1.f, 0.f), PI);
 	lTransform = lRotMatrix * lTransMatrix;
 	m_carChassis->setWorldTransform(cPhysics::Get().Local2Bullet(lTransform));
 
@@ -207,7 +207,7 @@ void Vehicle::renderme(){
 	btVector3 wheelColor(1,0,0);
 
 	btVector3	worldBoundsMin,worldBoundsMax;
-	cPhysics::Get().GetBulletWorld()->getBroadphase()->getBroadphaseAabb(worldBoundsMin,worldBoundsMax);
+	//cPhysics::Get().GetBulletWorld()->getBroadphase()->getBroadphaseAabb(worldBoundsMin,worldBoundsMax);
 
 	for (i=0;i<m_vehicle->getNumWheels();i++)
 	{
@@ -226,7 +226,7 @@ void Vehicle::renderme(){
 		lRotMatrix.LoadRotation(lqAxis, btq.getAngle());
 
 		cGraphicManager::Get().SetWorldMatrix(lRotMatrix * lTransMatrix);
-		debugWheels(m,m_wheelShape,wheelColor,1,worldBoundsMin,worldBoundsMax);
+		debugWheels(m,m_wheelShape,wheelColor,1, btVector3(1.0,1.0,1.0) /*worldBoundsMin*/, btVector3(1.0,1.0,1.0) /*worldBoundsMax*/);
 		
 		lTransMatrix.LoadIdentity();
 		cGraphicManager::Get().SetWorldMatrix(lTransMatrix);
@@ -249,23 +249,23 @@ void Vehicle::Update(){
 }
 
 void Vehicle::MoveForward(float lfTimestep){
-	gEngineForce = maxEngineForce; // * lfTimestep;
+	gEngineForce = maxEngineForce * lfTimestep;
 	gBreakingForce = 0.f;
 }
 
 void Vehicle::Break(float lfTimestep){
-	gBreakingForce = maxBreakingForce; // * lfTimestep; 
+	gBreakingForce = maxBreakingForce * lfTimestep; 
 	gEngineForce = 0.f;
 }
 
 void Vehicle::SteeringLeft(float lfTimestep){
-	gVehicleSteering += steeringIncrement; // * lfTimestep;
+	gVehicleSteering += steeringIncrement * lfTimestep;
 	if (gVehicleSteering > steeringClamp)
 		gVehicleSteering = steeringClamp;
 }
 
 void Vehicle::SteeringRight(float lfTimestep){
-	gVehicleSteering -= steeringIncrement; // * lfTimestep;
+	gVehicleSteering -= steeringIncrement * lfTimestep;
 	if (gVehicleSteering < -steeringClamp)
 		gVehicleSteering = -steeringClamp;
 }

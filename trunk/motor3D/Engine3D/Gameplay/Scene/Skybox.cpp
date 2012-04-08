@@ -162,7 +162,7 @@ int Skybox::LoadSkyBoxTextures (char *front, char *back, char *left, char *right
 
 	if (front != NULL){
 		tex_front = cTextureManager::Get().LoadResource("sky_front", front);
-		assert(tex_floor.IsValidHandle());
+		assert(tex_front.IsValidHandle());
 	} else {
 		//tex_front = NULL;
 	}
@@ -204,10 +204,10 @@ int Skybox::LoadSkyBoxTextures (char *front, char *back, char *left, char *right
 }
 
 void Skybox::Init(){
-	LoadSkyBoxTextures("Data/Scene/images/heat_ft.jpg", "Data/Scene/images/heat_bk.jpg","Data/Scene/images/heat_lf.jpg", "Data/Scene/images/heat_rt.jpg", "Data/Scene/images/heat_up.jpg", NULL);
+	LoadSkyBoxTextures("Data/Scene/images/skybox/heat_ft.jpg", "Data/Scene/images/skybox/heat_bk.jpg","Data/Scene/images/skybox/heat_lf.jpg", "Data/Scene/images/skybox/heat_rt.jpg", "Data/Scene/images/skybox/heat_up.jpg", NULL);
 }
 
 void Skybox::Render(){
     glColor3f(1.f, 1.f, 1.f);
-    CreateSkyBox(0, 5, 0, 1390, 1200, 1390);   // Render Inner Layer
+    CreateSkyBox(0, 5, 0, 2390, 2200, 2390);   // Render Inner Layer
 }

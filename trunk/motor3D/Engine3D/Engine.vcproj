@@ -699,14 +699,6 @@
 					RelativePath=".\Gameplay\Terrain\Heightmap.h"
 					>
 				</File>
-				<File
-					RelativePath=".\Gameplay\Terrain\Terrain.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\Gameplay\Terrain\Terrain.h"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="CharacterPos"
@@ -723,6 +715,14 @@
 			<Filter
 				Name="Vehicle"
 				>
+				<File
+					RelativePath=".\Gameplay\Vehicle\Mustang.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Gameplay\Vehicle\Mustang.h"
+					>
+				</File>
 				<File
 					RelativePath=".\Gameplay\Vehicle\Vehicle.cpp"
 					>

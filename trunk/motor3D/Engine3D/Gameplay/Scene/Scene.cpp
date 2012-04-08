@@ -87,6 +87,8 @@ void cScene::ProcessScene( const aiScene* lpScene )
 		mMaterialList.push_back(lHandle);
 	}
 
+	// Añade textura de bump si existe
+
 	//La clase lpScene cuenta con un atributo llamado mNumMeshes que contiene el 
 	// número de meshes (mallas) que se encuentran en la escena y un array llamado mMeshes que 
 	// contiene las meshes en sí mismas. Por lo tanto lo que haremos será acceder a todas esas 
@@ -178,8 +180,7 @@ void cScene::ConvertNodesToObjects( aiNode *lpNode, cMatrix lTransform )
 			unsigned luiMeshIndex = lpNode->mMeshes[luiIndex];
 			unsigned luiMaterialIndex;
 			luiMaterialIndex = mMeshMaterialIndexList[luiMeshIndex];
-			lpObject->AddMesh( mMeshList[luiMeshIndex],
-			mMaterialList[luiMaterialIndex] );
+			lpObject->AddMesh( mMeshList[luiMeshIndex], mMaterialList[luiMaterialIndex] );
 		}
 		mObjectList.push_back(lpObject);
 	}

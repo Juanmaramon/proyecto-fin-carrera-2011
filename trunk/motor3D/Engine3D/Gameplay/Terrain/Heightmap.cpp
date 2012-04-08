@@ -43,16 +43,6 @@ bool Heightmap::LoadRawFile(char *filename,int size){
 		}
 	}
 
-/*	for (int nMesh = 0; nMesh < NSUBMESH; nMesh++){
-		for (int i = 0; i < BULLET_MAP_SIZE; i++ ){
-			for (int j = 0; j < BULLET_MAP_SIZE; j++ ){
-				subheightmaps[ nMesh ][ i + (j * BULLET_MAP_SIZE) ] = Height( i, j );
-				//smallHeightMap[ i + (j * BULLET_MAP_SIZE) ] = Height( i, j );
-			}
-		}
-	}*/
-
-
 	return true;
 }
 
@@ -106,48 +96,21 @@ static btVector3 getUpVector(int upAxis, btScalar regularValue, btScalar upValue
 /* Heightmap */
 
 bool Heightmap::Load(){
+	btScalar minHeight, maxHeight;
+
 	//Raw file
-	if(!LoadRawFile			("./Data/Scene/images/terrain.raw", MAP_SIZE*MAP_SIZE))	return false;
+	if(!LoadRawFile			("./Data/Scene/images/heightmap/terrain.raw", MAP_SIZE*MAP_SIZE))	return false;
 	
 	//Texture 1
-	tex_floor = cTextureManager::Get().LoadResource("terrain", "./Data/Scene/images/sand.tga"); 
+	tex_floor = cTextureManager::Get().LoadResource("terrain", "./Data/Scene/images/heightmap/bottom.tga"); 
 	assert(tex_floor.IsValidHandle());
 	
 	//Texture 2
-	tex_detail = cTextureManager::Get().LoadResource("detail", "./Data/Scene/images/mid1.tga");	
+	tex_detail = cTextureManager::Get().LoadResource("detail", "./Data/Scene/images/heightmap/detail.tga");	
 	assert(tex_detail.IsValidHandle());
-	
-	btScalar minHeight, maxHeight;
 
 	//Create display list
 	Create(minHeight, maxHeight);
-
-	// Crea submalla para Bullet
-	for (int i = 0; i < BULLET_MAP_SIZE; i++ ){
-		for (int j = 0; j < BULLET_MAP_SIZE; j++ ){
-			smallHeightMap[ i + (j * BULLET_MAP_SIZE) ] = Height( i, j );
-		}
-	}
-
-	// Creates physics over the terrain data
-	bool flipQuadEdges = false;													// width, height, *heightmapData, scale, minHeight, maxHeight, upAxis, heightMapDatatype, flipQuadEdges 
-	int upAxis = 1;
-	btHeightfieldTerrainShape * heightfieldShape = new btHeightfieldTerrainShape(BULLET_MAP_SIZE, BULLET_MAP_SIZE, smallHeightMap, s_gridHeightScale, minHeight, maxHeight, upAxis, PHY_UCHAR, flipQuadEdges);
-	assert(heightfieldShape);
-
-	heightfieldShape->setUseDiamondSubdivision(true);
-
-	// scale the shape
-	//btVector3 localScaling = getUpVector(upAxis, s_gridSpacing1, 1.0);
-	//heightfieldShape->setLocalScaling(localScaling);
-
-	// stash this shape away
-	cPhysics::Get().getCollisionShapes().push_back(heightfieldShape);
-
-	// create ground object
-	float mass = 0.0;
-   
-	btRigidBody* body = cPhysics::Get().GetNewBody(heightfieldShape, mass, cVec3(-358.5f, -140, -918.5f));	
 
 	return true;
 }
@@ -161,7 +124,7 @@ void Heightmap::Create(btScalar& minHeight, btScalar& maxHeight){
 	if(!HeightMap) return;					// Make sure our height data is valid
 
 	detail = true;							// Detailed heightmap
-	detail_level = 32;
+	detail_level = 256;
 	disp_list_id = glGenLists(1);
 	glNewList(disp_list_id, GL_COMPILE);
 
@@ -310,7 +273,8 @@ void Heightmap::Create(btScalar& minHeight, btScalar& maxHeight){
 void Heightmap::Render(){
 	glPushMatrix();
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);	
-	glTranslatef(/*-BULLET_MAP_SIZE * 0.5f*/ -390.f, -140.f, -950.f /*-BULLET_MAP_SIZE * 0.5f*/); 
+	//glTranslatef(/*-BULLET_MAP_SIZE * 0.5f*/ -390.f, -140.f, -950.f /*-BULLET_MAP_SIZE * 0.5f*/); 
+	glTranslatef(-MAP_SIZE/2.f, -10.f, -MAP_SIZE/2.f);	
 	glEnable(GL_TEXTURE_2D);
 	glCallList(disp_list_id);
 	glDisable(GL_TEXTURE_2D);

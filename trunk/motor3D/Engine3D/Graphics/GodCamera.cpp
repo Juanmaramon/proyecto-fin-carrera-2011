@@ -3,7 +3,8 @@
 #include <stdio.h>
 #include "GraphicManager.h"
 
-#define MOUSE_SPEED 0.5f 
+#define MOUSE_SPEED 1.5f 
+#define GOD_STEP 100.f 
 
 void GodCamera::Init(){
 	mNew_pos  = cVec3(0.0f, 0.0f, 0.0f);
@@ -13,23 +14,23 @@ void GodCamera::Init(){
 }
 
 void GodCamera::MoveFront(float lfTimestep){
-	SetView(GetPosition() +  cVec3(0.f, 0.f, 10.f) * lfTimestep);
-	mPosition += cVec3(0.f, 0.f, 10.f) * lfTimestep;
+	SetView(GetPosition() +  cVec3(0.f, 0.f, GOD_STEP) * lfTimestep);
+	mPosition += cVec3(0.f, 0.f, GOD_STEP) * lfTimestep;
 }
 
 void GodCamera::MoveBack(float lfTimestep){
-	SetView(GetPosition() - cVec3(0.f, 0.f, 10.f) * lfTimestep);
-	mPosition -= cVec3(0.f, 0.f, 10.f) * lfTimestep;
+	SetView(GetPosition() - cVec3(0.f, 0.f, GOD_STEP) * lfTimestep);
+	mPosition -= cVec3(0.f, 0.f, GOD_STEP) * lfTimestep;
 }
 
 void GodCamera::MoveLeft(float lfTimestep){
-	SetView(GetPosition() + cVec3(10.f, 0.f, 0.f) * lfTimestep);
-	mPosition += cVec3(10.f, 0.f, 0.f) * lfTimestep;
+	SetView(GetPosition() + cVec3(GOD_STEP, 0.f, 0.f) * lfTimestep);
+	mPosition += cVec3(GOD_STEP, 0.f, 0.f) * lfTimestep;
 }
 
 void GodCamera::MoveRight(float lfTimestep){
-	SetView(GetPosition() - cVec3(10.f, 0.f, 0.f) * lfTimestep);
-	mPosition -= cVec3(10.f, 0.f, 0.f) * lfTimestep;
+	SetView(GetPosition() - cVec3(GOD_STEP, 0.f, 0.f) * lfTimestep);
+	mPosition -= cVec3(GOD_STEP, 0.f, 0.f) * lfTimestep;
 }
 
 void GodCamera::MoveYawPitch(float lfYaw, float lfPitch, float lfTimestep){

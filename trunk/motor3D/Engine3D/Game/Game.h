@@ -8,11 +8,13 @@
 #include "..\Gameplay\Object\Object.h"
 #include "..\Physics\cPhysics.h"
 #include "..\Physics\cPhysicObject.h"
-#include "..\Gameplay\Terrain\Heightmap.h"
+
 #include "..\Gameplay\CharacterPos\CharacterPos.h"
 #include "..\Graphics\GodCamera.h"
 #include "..\Gameplay\Vehicle\Vehicle.h"
 #include "..\Gameplay\Scene\Skybox.h"
+#include "..\Gameplay\Vehicle\Mustang.h"
+#include "..\Gameplay\Terrain\Heightmap.h"
 
 //Clase que hace uso del Patrón Singleton definido en Singleton.h, para iniciar, actualizar, dibujar
 // y finalizar el juego
@@ -32,14 +34,28 @@ protected:
 		//Instancia de la clase cFont para crear texto.
 		cFont mFont;
 		//Instancia de la clase cResourceHandle que se encarga de manejar la escena del juego.
-		cResourceHandle mScene;
+		cResourceHandle mDuck;
+		cResourceHandle mMusExt;
+		cResourceHandle mMusInt;
+		cResourceHandle mMusMet;
+		cResourceHandle mMusNeu;
+		Mustang mMustang;
+		cObject mTire;
+		cObject mExt;
+		cObject mInt;
+		cObject mMet;
+
+		cResourceHandle mItemCongelacion;
+
 		// Instance that manages skeletal animation part of the engine
 		cResourceHandle mSkeletalMesh;
 		// Bullet physics object
 		//cPhysics mPhysics;
-	
+
+
 		// Terrain
 		Heightmap mHeightmap;
+
 		// Cámara de juego o godmode
 		bool mbInGame;
 		// Modo de rasterizacion solida/wireframe
@@ -47,7 +63,7 @@ protected:
 		// Camara godmode
 		GodCamera mGodCamera;
 		// Vehiculo 
-		Vehicle mVehicle;
+		//Vehicle mVehicle;
 		// Skybox
 		Skybox mSkybox;
 
@@ -73,6 +89,10 @@ public:
 
 	// Time since application start
 	inline float GetAcumulatedTime() { return mfAcTime; }	
+	
+	// Get camera object
+	cCamera Get3DCamera(){ return m3DCamera; };
+	
 	float mfAcTime;
 
 	// Object for skeletal meshes
@@ -82,6 +102,11 @@ public:
 	std::vector<cPhysicObject> maSphereObjects;
 	cPhysicModel mSphereModel;
 	cPhysicModel mBoxModel;
+
+	// Devuelve el objeto mapa de altura
+//	Heightmap GetHeightmap(){ return mHeightmap; }
+	// Devuelve el objeto entity
+//	CEntity GetEntity(){ return mEntity; }
 };
 
 #endif

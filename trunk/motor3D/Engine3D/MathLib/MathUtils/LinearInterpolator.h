@@ -2,6 +2,7 @@
 #define LINEAR_INTERPOLATOR_H_
 
 #include "../Vec/VecLib.h"
+//#include "../../Gameplay/Terrain/macro.h"
 
 //! Calcula una interpolacion lineal
 /*!
