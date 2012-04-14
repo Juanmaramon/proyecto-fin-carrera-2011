@@ -9,6 +9,7 @@ class cFileUtils
 	public:
 		static std::string GetDirectory(const std::string lacFile);
 		static std::string GetFilename(const std::string lacFile);
+		static bool CheckFile(const std::string lacFile);
 };
 
 #endif

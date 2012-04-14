@@ -31,6 +31,7 @@ class cMaterial : public cResource {
 		bool SetFirstPass();
 		bool SetNextPass();
 		inline cResourceHandle GetEffect() { return mEffect; }
+		std::vector<cTextureData>* GetTextureVector() { return &maTextureData; }
 	private:
 		void ReadAllTextures(aiMaterial * lpAiMaterial, cMaterialData * lpMaterialData);
 		std::string macFile;

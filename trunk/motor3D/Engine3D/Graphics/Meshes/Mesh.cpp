@@ -61,6 +61,10 @@ bool cMesh::Init( const std::string &lacNameID, void * lpMemoryData, int liDataT
    glGenBuffers(1, &mVboNormals);
    assert(glGetError() == GL_NO_ERROR);
 
+   // El buffer de tangentes similar al de normales
+   glGenBuffers(1, &mVboTangents);
+   assert(glGetError() == GL_NO_ERROR);
+
    //...y se crea el buffer de índices:
    glGenBuffers(1, &mVboIndex);
    assert(glGetError() == GL_NO_ERROR);
@@ -97,6 +101,19 @@ bool cMesh::Init( const std::string &lacNameID, void * lpMemoryData, int liDataT
    else
    {	   
 	   mbHasNormals = false;
+   }
+
+   // Check that the mesh has tangents
+   if ( lpAiMesh->HasTangentsAndBitangents() ) {
+		glBindBuffer(GL_ARRAY_BUFFER, mVboTangents);
+		assert(glGetError() == GL_NO_ERROR);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * lpAiMesh->mNumVertices, lpAiMesh->mTangents, GL_STATIC_DRAW);
+		assert(glGetError() == GL_NO_ERROR);	   
+
+		mbHasTangents = true;
+   }
+   else {
+	   mbHasTangents = false;
    }
 
    // Tex Coords
@@ -174,6 +191,10 @@ void cMesh::Deinit()
 
    if (mbHasNormals) //este atributo se inicializa en el Init.
       glDeleteBuffers(1, &mVboNormals);
+
+   if (mbHasTangents) //este atributo se inicializa en el Init.
+      glDeleteBuffers(1, &mVboTangents);
+
    glDeleteBuffers(1, &mVboIndex);
 }
 
@@ -201,19 +222,54 @@ void cMesh::RenderMesh()
 		assert(glGetError() == GL_NO_ERROR);
    }
 
+  // Identificador de buffer de tangentes
+//  GLuint tangentLoc;
+
+   // Tangents
+//   if (mbHasTangents) //este atributo se inicializa en el Init.  
+//   {
+		// Habilita el array de tangentes
+/*		glEnableVertexAttribArray(mVboTangents);
+		assert(glGetError() == GL_NO_ERROR);
+		//glBindBuffer(GL_ARRAY_BUFFER, mVboTangents);
+		//assert(glGetError() == GL_NO_ERROR);
+		glVertexAttribPointer(mVboTangents, 3, GL_FLOAT,GL_FALSE, 0, 0);
+		assert(glGetError() == GL_NO_ERROR);	*/
+
+	  /* glBindBuffer(GL_ARRAY_BUFFER, mVboTangents);
+	   assert(glGetError() == GL_NO_ERROR);
+	   glVertexPointer(3, GL_FLOAT, sizeof(float) * 3, 0);
+	   assert(glGetError() == GL_NO_ERROR);*/
+//   }
+
    // This line has been added
    //-----------------------------------------------------------------
    // Set all the UV channels to the render
    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
    static GLenum meTextureChannelEnum[] = { GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3 };
    
-   for(unsigned luiTexCoordChannel = 0; luiTexCoordChannel < maVboTexture.size(); ++luiTexCoordChannel) {
+   unsigned luiTexCoordChannel;
+   for(luiTexCoordChannel = 0; luiTexCoordChannel < maVboTexture.size(); ++luiTexCoordChannel) {
 	   // Texture coordinates
 	   glClientActiveTexture(meTextureChannelEnum[luiTexCoordChannel]);
        glBindBuffer(GL_ARRAY_BUFFER, maVboTexture[luiTexCoordChannel]);
        assert(glGetError() == GL_NO_ERROR);
-       glTexCoordPointer(2, GL_FLOAT, sizeof(float)*2, 0);
+       glTexCoordPointer(2, GL_FLOAT, sizeof(float) * 2, 0);
        assert(glGetError() == GL_NO_ERROR);
+   }
+
+   // Tangents
+   if (mbHasTangents) //este atributo se inicializa en el Init.  
+   {
+	   // Si no han sido utilizados todos los VBO de texturas entonces se utlizará para enviar las tangentes al shader
+	   unsigned luiTextureChannelSize = sizeof( meTextureChannelEnum ) / sizeof( meTextureChannelEnum[0] );
+	   if (luiTexCoordChannel < (luiTextureChannelSize - 1)) {
+		   glClientActiveTexture(meTextureChannelEnum[luiTexCoordChannel]);
+		   glBindBuffer(GL_ARRAY_BUFFER, mVboTangents);
+		   assert(glGetError() == GL_NO_ERROR);
+		   glTexCoordPointer(3, GL_FLOAT, sizeof(float) * 3, 0);
+		   assert(glGetError() == GL_NO_ERROR);			
+	   }
    }
    
    // Index
@@ -229,5 +285,6 @@ void cMesh::RenderMesh()
    assert(glGetError() == GL_NO_ERROR);
    glDisableClientState(GL_VERTEX_ARRAY);
    glDisableClientState(GL_NORMAL_ARRAY);
+   //glDisableVertexAttribArray(tangentLoc);  //Always remember to clean up!
    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 } 
