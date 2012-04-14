@@ -10,7 +10,9 @@
 #include "../../Graphics/Materials/MaterialManager.h"
 #include "../../Graphics/Materials/Material.h"
 #include "../../Utility/FileUtils.h"
- 
+#include "../../Graphics/Textures/TextureManager.h"
+
+
 /*NOTA:
 ------------------
  CARGA DE ESCENA
@@ -83,6 +85,27 @@ void cScene::ProcessScene( const aiScene* lpScene )
 		// Load the resource
 		cResourceHandle lHandle;
 		lHandle = cMaterialManager::Get().LoadResource(lName.data, &lMaterialData, 0);
+		// Extrae el material para consguir el patron de nombres
+		cMaterial* lMaterial = (cMaterial*) lHandle.GetResource();
+		cTextureData lText = lMaterial->GetTextureVector()->at(0);
+		std::string Nom = lText.mTexture.GetResource()->GetNameID();
+		// Encuentra la ultima posicion de _ para encontrar el patron del nombre nombre-fichero_bump.jpg
+		size_t lPos = Nom.rfind("_");
+		std::string lNewTextName;
+		// Si lo encuentra concatena _bump.jpg
+		if (lPos != std::string::npos) {
+			std::string lBasicTextureName = Nom.substr(0, lPos + 1);
+			lNewTextName = lBasicTextureName + "bump.jpg";
+		}
+
+		// Si existe el fichero lo añade a la lista de texturas del modelo (como bump map)
+		cTextureData lData;
+		if (cFileUtils::CheckFile(lNewTextName)) {
+			lData.macShaderTextureID = "Normals_0";
+			lData.mTexture = cTextureManager::Get().LoadResource(lNewTextName, lNewTextName); 
+			assert(lData.mTexture.IsValidHandle());
+			((cMaterial*) lHandle.GetResource())->GetTextureVector()->push_back(lData);
+		}
 		// Save the material on a vector in the Scene
 		mMaterialList.push_back(lHandle);
 	}

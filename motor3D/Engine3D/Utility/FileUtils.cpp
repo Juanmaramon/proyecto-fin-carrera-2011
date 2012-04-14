@@ -23,3 +23,16 @@ std::string cFileUtils::GetFilename(const std::string lacFile)
 	}
 	return lacFile;
 }
+
+
+bool cFileUtils::CheckFile(const std::string lacFile) {
+	FILE* fp = fopen(lacFile.c_str(), "r");
+	if (fp) {
+		// file exists
+		fclose(fp);
+		return true;
+	} else {
+		// file doesn't exist
+		return false;
+	}
+}

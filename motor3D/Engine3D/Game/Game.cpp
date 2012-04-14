@@ -104,10 +104,10 @@ bool cGame::Init()
 //			mEntity.Init();
 
 			//Se inicializa la clase que gestiona los materiales.
-			cMaterialManager::Get().Init(10);
+			cMaterialManager::Get().Init(20);
 
 			// Init of effects management
-			cEffectManager::Get().Init(10);
+			cEffectManager::Get().Init(20);
 
 			//Init Camera 2D, para las cadenas de texto.
 			//Se inicializa la cámara 2D con una perspectiva ortogonal.

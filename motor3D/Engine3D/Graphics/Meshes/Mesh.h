@@ -71,11 +71,18 @@ class cMesh : public cResource
 	  //Buffer de normales.
 	  unsigned int mVboNormals;
 
+	  //Buffer de tangentes.
+	  unsigned int mVboTangents;
+
+
 	  //Buffer de índices.
 	  unsigned int mVboIndex;
 
 	  //Booleano que indique si la malla cuenta o no con normales.
 	  bool mbHasNormals;
+
+	  // Booleano que indica si la malla cuenta con tangentes y bitangentes. (Para el bump mapping)
+	  bool mbHasTangents;
 
 };
 #endif

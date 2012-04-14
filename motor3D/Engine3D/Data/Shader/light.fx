@@ -9,8 +9,8 @@ float4x4 world;
 float4x4 worldInverseTranspose;
 
 // Direccion de la luz
-//float3 LightDirection : Direction = float3(0,50,10);
-float3 LightDirection : Direction = float3(-1,3,0);
+float3 LightDirection : Direction = float3(0,50,10);
+//float3 LightDirection : Direction = float3(-1,5,0);
 
 
 // Color de la luz de ambiente
@@ -31,7 +31,6 @@ sampler2D Diffuse_0 = sampler_state {
 };
 
 // Textura especular
-//texture ReflectionMap : Diffuse;
 sampler Specular_0 = sampler_state
 {
 	minFilter = LinearMipMapLinear;
@@ -40,6 +39,14 @@ sampler Specular_0 = sampler_state
 	AddressV = Repeat;   
 };
 
+// Textura especular
+sampler Normals_0 = sampler_state
+{
+	minFilter = LinearMipMapLinear;
+	magFilter = Linear;
+	AddressU = Repeat;
+	AddressV = Repeat;   
+};
 
 // Datos del vertice
 struct VS_INPUT
@@ -47,7 +54,7 @@ struct VS_INPUT
 	float3 position : POSITION;
 	float2 tex0 	: TEXCOORD0;
 	float3 Normal : NORMAL;
-	float3 Tangent : TANGENT;
+	float3 Tangent : TEXCOORD1;
 };
 
 // Datos de salida del vertex shader
@@ -77,9 +84,9 @@ VS_OUTPUT myvs( const VS_INPUT IN )
 	OUT.position = mul( worldViewProj, position );
 
 	float3x3 worldToTangentSpace;
-  	//worldToTangentSpace[0] = mul(world, IN.Tangent);
-    	//worldToTangentSpace[1] = mul(world, cross(IN.Tangent, IN.Normal));
-    	//worldToTangentSpace[2] = mul(world, input.Normal);
+  	worldToTangentSpace[0] = mul((float3x3)world, IN.Tangent);
+    	worldToTangentSpace[1] = mul((float3x3)world, cross(IN.Tangent, IN.Normal));
+    	worldToTangentSpace[2] = mul((float3x3)world, IN.Normal);
 
 	OUT.tex0 = IN.tex0;
 
@@ -87,11 +94,10 @@ VS_OUTPUT myvs( const VS_INPUT IN )
 	OUT.posS = position;
 
 	// Diffuse lightning and specular
-	//OUT.Light = normalize(mul(worldToTangentSpace, LightDirection));
-	OUT.Light = normalize(LightDirection);
+	OUT.Light = normalize(mul(worldToTangentSpace, LightDirection));
+
 	// Bump
-	//OUT.Normal = normalize(mul(world, IN.Normal));
-	OUT.Normal = normalize(mul((float3x3)worldInverseTranspose, IN.Normal));
+	OUT.Normal = normalize(mul((float3x3)world, IN.Normal));
 
 	return OUT;
 }
@@ -105,8 +111,9 @@ PS_OUTPUT myps( VS_OUTPUT IN )
 	PS_OUTPUT output;
 	
 	// Bump
-	// float3 Normal = (2 * (tex2D(Specular_0, IN.tex0))) - 1.0;
-	float Diffuse = saturate(dot(IN.Light, IN.Normal));
+	float3 Normal = (2 * (tex2D(Normals_0, IN.tex0))) - 0.5;
+	
+	float Diffuse = saturate(dot(IN.Light, Normal));
 	float4 Ambient = AmbientIntensity * AmbientColor;
 	float4 texCol = tex2D(Diffuse_0, IN.tex0);
 
