@@ -293,6 +293,10 @@ void cGame::Update( float lfTimestep )
 	// Calcula velocidad * tiempo transcurrido
 	CharacterPos::Get().Update(lfTimestep);
 
+	// Rotaciones del ratón
+	float lfYaw = GetValue( eIA_MouseYaw );
+	float lfPitch = GetValue( eIA_MousePitch );
+
 	// En modo juego, actualiza jugador
 	if (mbInGame){
 		mGodCamera.ResetYawPitch();
@@ -340,6 +344,10 @@ void cGame::Update( float lfTimestep )
 								   vVector.z),
 								   mMustang.GetVehicleBullet()->GetChasisPos(), 
 								   cVec3(0.0f, 1.f, 0.f) );
+
+
+		mMustang.Update(lfYaw, lfPitch);
+
 	// Modo Godmode	
 	} else {
 		// Actualizacion camara godmode
@@ -355,16 +363,15 @@ void cGame::Update( float lfTimestep )
 		else if ( lbmoveRight ){
 			mGodCamera.MoveRight(lfTimestep);
 		}
-		// Rotaciones del ratón
-		float lfYaw = GetValue( eIA_MouseYaw );
-		float lfPitch = GetValue( eIA_MousePitch );
 		if (lfYaw || lfPitch){
 			mGodCamera.MoveYawPitch(lfYaw, lfPitch, lfTimestep);
 		}
+
+		mMustang.Update(lfYaw, lfPitch);
+		//mMustang.Update();
 	}
 
 	//mVehicle.Update();
-	mMustang.Update();
 
 	mObject.SetPosition(CharacterPos::Get().GetCharacterPosition(), CharacterPos::Get().GetYaw());
 

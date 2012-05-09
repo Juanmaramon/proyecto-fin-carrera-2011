@@ -3,6 +3,8 @@
 #include "..\..\Graphics\Materials\Material.h"
 #include "..\..\Graphics\Meshes\Mesh.h"
 #include "..\Scene\Scene.h"
+#include "..\..\Input\InputManager.h"
+#include "..\..\Input\InputConfiguration.h"
 
 // Reset name, world matrix, and vectors
 void cObject::Init()
@@ -24,7 +26,20 @@ void cObject::Render()
 {
 	cMatrix lWorldMatrix;
 	// Set World Matrix
+	std::string name = this->GetName().c_str();
+
 	cGraphicManager::Get().SetWorldMatrix(mWorldMatrix);
+	
+	if (name.compare("mustang_metralleta") == 0){
+		// Rotaciones del ratón
+		float lfYaw = GetValue( eIA_MouseYaw );
+		float lfPitch = GetValue( eIA_MousePitch );
+		//cGraphicManager::Get().DrawLine(cVec3(-146.0f, 41.0f, 10.0f ), cVec3(lfYaw, lfPitch, 1.f), cVec3(1.f, 0.f, 0.f));
+		cGraphicManager::Get().DrawLine(cVec3(-146.0f, 41.0f, 10.0f ), cVec3(-146.f, 41.f, 300.f), cVec3(1.f, 0.f, 0.f));
+
+		cGraphicManager::Get().DrawPoint(cVec3(-146.f, 41.f, 10.f),cVec3(1.f, 0.f, 0.f));
+		//cGraphicManager::Get().DrawAxis();	
+	}
 	for (unsigned luiIndex = 0; luiIndex < mMeshHandles.size(); ++luiIndex){
 		// Set the material
 		cMaterial* lpMaterial = ( cMaterial* ) mMaterialHandles[luiIndex].GetResource();

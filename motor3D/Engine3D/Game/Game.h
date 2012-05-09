@@ -52,7 +52,6 @@ protected:
 		// Bullet physics object
 		//cPhysics mPhysics;
 
-
 		// Terrain
 		Heightmap mHeightmap;
 
@@ -107,6 +106,9 @@ public:
 //	Heightmap GetHeightmap(){ return mHeightmap; }
 	// Devuelve el objeto entity
 //	CEntity GetEntity(){ return mEntity; }
+
+	unsigned GetGameWidth() { return mProperties.muiWidth; }
+	unsigned GetGameHeight() { return mProperties.muiHeight; }
 };
 
 #endif
