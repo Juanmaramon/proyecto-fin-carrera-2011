@@ -15,7 +15,7 @@ public:
 	void Break(float lfTimestep);
 	void SteeringLeft(float lfTimestep);
 	void SteeringRight(float lfTimestep);
-	void Update();
+	void Update(float lfYaw = 0.0f, float lfPitch = 0.0f);
 	Vehicle* GetVehicleBullet() { return &mVehicle; }
 	void Mustang::Render();
 
@@ -27,7 +27,11 @@ private:
 	cObject* mMusInt;
 	cObject* mMusWea;
 	cMatrix mScaleMatrix, lScaleMatrixChasis;
-	std::vector<cObject> maTires;
+	std::vector<cObject*> maTires;
+	// Resolucion vertical y horizontal
+	unsigned muiVerticalRes, muiHorizontalRes;
+	// Rotacion del arma
+	float mfWeaponYaw;
 };
 
 #endif

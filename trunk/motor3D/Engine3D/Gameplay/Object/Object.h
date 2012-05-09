@@ -21,7 +21,7 @@ class cObject
 		inline std::string GetName() { return macName; }
 		inline void SetName(const std::string &lacName){ macName = lacName; }
 		inline void SetWorldMatrix(const cMatrix& lWorld){ mWorldMatrix = lWorld; }
-		inline cMatrix GetWorldMatrix( const cMatrix& lWorld ){ return mWorldMatrix; }
+		inline cMatrix GetWorldMatrix(){ return mWorldMatrix; }
 		void AddMesh( cResourceHandle lMeshHandle,
 		cResourceHandle lMaterialHandle );
 

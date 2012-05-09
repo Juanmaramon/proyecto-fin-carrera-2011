@@ -18,8 +18,8 @@ void cMouse::Init()
    mpOISMouse->setEventCallback( this );
 
    //Se indica el área de nuestra pantalla.
-   mpOISMouse->getMouseState().height = 480;
-   mpOISMouse->getMouseState().width = 640;
+   mpOISMouse->getMouseState().height = 768;
+   mpOISMouse->getMouseState().width = 1024;
 
 
    mbIsValid = true;  

@@ -94,10 +94,12 @@ VS_OUTPUT myvs( const VS_INPUT IN )
 	OUT.posS = position;
 
 	// Diffuse lightning and specular
-	OUT.Light = normalize(mul(worldToTangentSpace, LightDirection));
+	//OUT.Light = normalize(mul(worldToTangentSpace, LightDirection));
+	OUT.Light = normalize(LightDirection);
 
 	// Bump
-	OUT.Normal = normalize(mul((float3x3)world, IN.Normal));
+	//OUT.Normal = normalize(mul((float3x3)world, IN.Normal));
+	OUT.Normal = normalize(mul((float3x3)worldInverseTranspose, IN.Normal));
 
 	return OUT;
 }
@@ -111,9 +113,10 @@ PS_OUTPUT myps( VS_OUTPUT IN )
 	PS_OUTPUT output;
 	
 	// Bump
-	float3 Normal = (2 * (tex2D(Normals_0, IN.tex0))) - 0.5;
+	//float3 Normal = (2 * (tex2D(Normals_0, IN.tex0))) - 0.5;
 	
-	float Diffuse = saturate(dot(IN.Light, Normal));
+	float Diffuse = saturate(dot(IN.Light, IN.Normal));
+	//float Diffuse = saturate(dot(IN.Light, Normal));
 	float4 Ambient = AmbientIntensity * AmbientColor;
 	float4 texCol = tex2D(Diffuse_0, IN.tex0);
 
