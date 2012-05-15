@@ -60,7 +60,7 @@ bool cGame::Init()
 			mGodCamera.SetPerspective( 45.0f, lfAspect, 0.1f, 10000.0f );
 	
 			//Se aleja la cámara para ver bien la escena que vamos a cargar posteriormente.
-			m3DCamera.SetLookAt( cVec3(0.f, 1.5f, 20.f),cVec3(0.f, 1.5f, 0.f), cVec3(0.0f, 1.f, 0.f) );
+			m3DCamera.SetLookAt( cVec3(0.f, 1.5f, 20.f), cVec3(0.f, 1.5f, 0.f), cVec3(0.0f, 1.f, 0.f) );
 
 			// Resetea color de fondo
 			glClearColor(1.0f, 0.9f, 0.7f, 1.0f);

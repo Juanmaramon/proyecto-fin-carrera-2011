@@ -15,7 +15,7 @@ class cObject
 {
 	public:
 		void Init();
-		inline void Deinit(){ ; };
+		void Deinit();
 		virtual void Update( float lfTimestep );
 		virtual void Render();
 		inline std::string GetName() { return macName; }
