@@ -98,44 +98,47 @@ void Mustang::Update(float lfYaw, float lfPitch){
 		cVec3 lvPosition = (cGame::Get().Get3DCamera().GetFront() * mfDistance) + cVec3(resX, resY, resZ) + cGame::Get().Get3DCamera().GetPosition();
 		cVec3 lvDirection = lvPosition - mMusWea->GetWorldMatrix().GetPosition();
 	
-			// Calcula el angulo de rotacion
-			float lfCosAngle = Dot( mMusWea->GetWorldMatrix().GetPosition(), lvDirection.Normalize() );
+		// Calcula el angulo de rotacion
+		//float lfCosAngle = Dot( mMusWea->GetWorldMatrix().GetPosition(), lvDirection.Normalize() );
 
-			// El coseno estará entre [-1, 1]
-			if ( lfCosAngle > 1.0f )
-			{
-				lfCosAngle = 1.0f;
-			}
-			else if (lfCosAngle < -1.0f )
-			{
-				lfCosAngle = -1.0f;
-			}
+		float lfCosAngle = Dot( mMusWea->GetWorldMatrix().GetFront(), lvDirection.Normalize() );
 
-			float lfAngle = acosf(lfCosAngle);
 
-			// Realiza el test del plano para saber si la rotacion sera para la derecha o izq.
-			cPlane lPlane;
-			lPlane.Init( mMusWea->GetWorldMatrix().GetRight(), mMusWea->GetWorldMatrix().GetPosition());
+		// El coseno estara entre [-1, 1]
+		if ( lfCosAngle > 1.0f )
+		{
+			lfCosAngle = 1.0f;
+		}
+		else if (lfCosAngle < -1.0f )
+		{
+			lfCosAngle = -1.0f;
+		}
 
-			//lfAngle -= mfWeaponYaw;
-			
-			if ( lPlane.PointTest(lvPosition) < 0.0f )
-			{
-				mfWeaponYaw += lfAngle;
-			}
-			else
-			{
-				mfWeaponYaw -= lfAngle;
-			}
+		float lfAngle = acosf(lfCosAngle);
 
-			sprintf(buff1, "angle: %f \n", lfAngle);
-			OutputDebugStr(buff1);
+		// Realiza el test del plano para saber si la rotacion sera para la derecha o izq.
+		cPlane lPlane;
+		lPlane.Init( mMusWea->GetWorldMatrix().GetRight(), mMusWea->GetWorldMatrix().GetPosition());
 
-			sprintf(buff1, "WeaponYaw: %f \n", mfWeaponYaw);
-			OutputDebugStr(buff1);
+		//lfAngle -= mfWeaponYaw;
+		
+		if ( lPlane.PointTest(lvPosition) < 0.0f )
+		{
+			mfWeaponYaw += lfAngle;
+		}
+		else
+		{
+			mfWeaponYaw -= lfAngle;
+		}
 
-			// Rota el arma
-			lRotMatrix.LoadRotation(cVec3(0.f, 1.f, 0.f), mfWeaponYaw);
+		sprintf(buff1, "angle: %f \n", lfAngle);
+		OutputDebugStr(buff1);
+
+		sprintf(buff1, "WeaponYaw: %f \n", mfWeaponYaw);
+		OutputDebugStr(buff1);
+
+		// Rota el arma
+		lRotMatrix.LoadRotation(cVec3(0.f, 1.f, 0.f), mfWeaponYaw);
 
 	}
 
