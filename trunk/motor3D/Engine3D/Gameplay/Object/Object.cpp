@@ -16,6 +16,13 @@ void cObject::Init()
 
 }
 
+void cObject::Deinit(){ 
+	macName = "";
+	mWorldMatrix.LoadIdentity();
+	mMeshHandles.empty();
+	mMaterialHandles.empty();
+};
+
 void cObject::AddMesh( cResourceHandle lMeshHandle, cResourceHandle lMaterialHandle ) 
 {
 	mMeshHandles.push_back( lMeshHandle );

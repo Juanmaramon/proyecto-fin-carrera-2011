@@ -27,11 +27,12 @@ private:
 	cObject* mMusInt;
 	cObject* mMusWea;
 	cMatrix mScaleMatrix, lScaleMatrixChasis;
-	std::vector<cObject*> maTires;
+	std::vector<cObject> maTires;
 	// Resolucion vertical y horizontal
 	unsigned muiVerticalRes, muiHorizontalRes;
 	// Rotacion del arma
 	float mfWeaponYaw;
+	float mfDistance;
 };
 
 #endif
