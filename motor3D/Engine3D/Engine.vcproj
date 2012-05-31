@@ -724,6 +724,14 @@
 					>
 				</File>
 				<File
+					RelativePath=".\Gameplay\Vehicle\Truck.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Gameplay\Vehicle\Truck.h"
+					>
+				</File>
+				<File
 					RelativePath=".\Gameplay\Vehicle\Vehicle.cpp"
 					>
 				</File>

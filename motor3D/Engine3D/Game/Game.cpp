@@ -104,7 +104,7 @@ bool cGame::Init()
 //			mEntity.Init();
 
 			//Se inicializa la clase que gestiona los materiales.
-			cMaterialManager::Get().Init(20);
+			cMaterialManager::Get().Init(30);
 
 			// Init of effects management
 			cEffectManager::Get().Init(20);
@@ -127,10 +127,10 @@ bool cGame::Init()
 			mFont.Init("./Data/Fonts/Test1.fnt");
 
 			//Se inicializa el gestor de mallas: habrá 4 mallas en la escena (mirar ./Data/Scene/) + Skeletal mesh.
-			cMeshManager::Get().Init(20);
+			cMeshManager::Get().Init(30);
 
 			//Se inicializa el gestor de escenas.
-			cSceneManager::Get().Init(20);   
+			cSceneManager::Get().Init(30);   
 
 			//Se carga la escena.
 			//mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/dragonsmall.DAE" ); 		
@@ -144,11 +144,12 @@ bool cGame::Init()
 			mMusInt = cSceneManager::Get().LoadResource( "Mustang_interior", "./Data/Scene/mustang_interior.dae" ); 
 			mMusMet = cSceneManager::Get().LoadResource( "Mustang_metralleta", "./Data/Scene/mustang_metralleta.dae" ); 
 			mMusNeu = cSceneManager::Get().LoadResource( "Mustang_neumatico", "./Data/Scene/mustang_neumatico.dae" ); 
-//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo1_rueda.dae" );
-//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo1_arma.dae" );
-//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo1_exterior.dae" );
+			mTruckNeu = cSceneManager::Get().LoadResource( "Truck_neumatico", "./Data/Scene/enemigo1_rueda.dae" );
+			mTruckArm = cSceneManager::Get().LoadResource( "Truck_arma", "./Data/Scene/enemigo1_arma.dae" );
+			mTruckExt = cSceneManager::Get().LoadResource( "Truck_exterior", "./Data/Scene/enemigo1_exterior.dae" );
+
+//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo2_exterior.dae" );
 //			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo2.dae" );
-//			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo1_exterior.dae" );
 //			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo2_arma.dae" );
 //			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo2_rueda.dae" );
 //		    mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/mad_drive_escombros_ruina.dae" );
@@ -232,15 +233,19 @@ bool cGame::Init()
 			mbInGame = true;
 			// Se inicializa en modo rasterizacion solida
 			mbRasterizationMode = true;
-			// Inicializacion del vehiculo
-			//mVehicle.initPhysics();
+			// Inicializacion del vehiculo (Mustang)
 			mTire = *((cObject*) ((cScene *)mMusNeu.GetResource())->getSubObject(0));
 			mExt = *((cObject*) ((cScene *)mMusExt.GetResource())->getSubObject(0));
 			mInt = *((cObject*) ((cScene *)mMusInt.GetResource())->getSubObject(0));
 			mMet = *((cObject*) ((cScene *)mMusMet.GetResource())->getSubObject(0));
-
-//			mTire.SetScaleMatrix(lScaleMatrix);
 			mMustang.Init(&mExt, &mInt, &mMet, &mTire);
+
+			// Incializacion de enemigo 1 (Truck)
+			mTruckExterior = *((cObject*) ((cScene *)mTruckExt.GetResource())->getSubObject(0));
+			mTruckWea = *((cObject*) ((cScene *)mTruckArm.GetResource())->getSubObject(0));
+			mTruckTire = *((cObject*) ((cScene *)mTruckNeu.GetResource())->getSubObject(0));
+			mTruck.Init(&mTruckExterior, &mTruckWea, &mTruckTire);
+
 			// Inicializa skybox
 			mSkybox.Init();
 		} else {
@@ -297,6 +302,8 @@ void cGame::Update( float lfTimestep )
 	float lfYaw = GetValue( eIA_MouseYaw );
 	float lfPitch = GetValue( eIA_MousePitch );
 
+	bool lbAuxCamera = IsPressed( eIA_SwitchCameraAux );
+
 	// En modo juego, actualiza jugador
 	if (mbInGame){
 		mGodCamera.ResetYawPitch();
@@ -322,7 +329,19 @@ void cGame::Update( float lfTimestep )
 		}
 
 		// Actualizacion de cámara de juego
-		float lfDistance = 8.f;
+		// Si se pulsa la tecla de camara auxiliar se cambia la orientacion de la camara
+		float lfDistance, lfYOffset;
+		cVec3 lvYViewOffset;
+		if (lbAuxCamera) {
+			lfDistance = -4.f;	
+			lfYOffset = 2.8f;
+			lvYViewOffset = cVec3(0.f, 3.f, 0.f);
+		} else {
+			lfDistance = 8.f;
+			lfYOffset = 3.3f;
+			lvYViewOffset = cVec3(0.f, 0.0f, 0.f);
+		}
+
 		//cVec3 vVector = CharacterPos::Get().GetCharacterPosition() - CharacterPos::Get().GetFront() * lfDistance;
 
 		/*m3DCamera.SetLookAt( cVec3(vVector.x,
@@ -331,22 +350,16 @@ void cGame::Update( float lfTimestep )
 								   CharacterPos::Get().GetCharacterPosition(), 
 								   cVec3(0.0f, 1.f, 0.f) );*/
 		//cVec3 vVector = mVehicle.GetChasisPos() - mVehicle.GetChasisRot() * lfDistance;
-		cVec3 vVector = mMustang.GetVehicleBullet()->GetChasisPos() - mMustang.GetVehicleBullet()->GetChasisRot() * lfDistance;
-
-		/*m3DCamera.SetLookAt( cVec3(vVector.x,
-								   vVector.y + 3.f,
-								   vVector.z),
-								   mVehicle.GetChasisPos(), 
-								   cVec3(0.0f, 1.f, 0.f) );*/
+		cVec3 vVector = mMustang.GetVehicleBullet()->GetChasisPos() - mMustang.GetVehicleBullet()->GetChasisRot()  * lfDistance;
 
 		m3DCamera.SetLookAt( cVec3(vVector.x,
-								   vVector.y + 3.f,
+								   vVector.y + lfYOffset,
 								   vVector.z),
-								   mMustang.GetVehicleBullet()->GetChasisPos(), 
+								   mMustang.GetVehicleBullet()->GetChasisPos() + lvYViewOffset, 
 								   cVec3(0.0f, 1.f, 0.f) );
 
-
-		mMustang.Update(lfYaw, lfPitch);
+		mMustang.Update(lfYaw, lfPitch, lbAuxCamera);
+		mTruck.Update();
 
 	// Modo Godmode	
 	} else {
@@ -368,6 +381,7 @@ void cGame::Update( float lfTimestep )
 		}
 
 		mMustang.Update(lfYaw, lfPitch);
+		mTruck.Update(lfYaw, lfPitch);
 		//mMustang.Update();
 	}
 
@@ -514,6 +528,8 @@ void cGame::Render()
 //	mMustang.GetVehicleBullet()->renderme();
 	mMustang.Render();
 
+	mTruck.Render();
+
 	// 3.4) Render of the skeleton mesh
 	// -------------------------------------------------------------
 	cMatrix lRotation, lCurrPos;
@@ -569,8 +585,9 @@ bool cGame::LoadResources( void )
 bool cGame::Deinit()
 {
 	//Se deinicializa en el orden inverso a la inicialización:
-	//mVehicle.~Vehicle();
+
 	mMustang.Deinit();
+	mTruck.Deinit();
 
 	cMaterialManager::Get().Deinit();
 
