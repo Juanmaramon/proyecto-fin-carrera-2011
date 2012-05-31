@@ -15,6 +15,7 @@
 #include "..\Gameplay\Scene\Skybox.h"
 #include "..\Gameplay\Vehicle\Mustang.h"
 #include "..\Gameplay\Terrain\Heightmap.h"
+#include "..\Gameplay\Vehicle\Truck.h"
 
 //Clase que hace uso del Patrón Singleton definido en Singleton.h, para iniciar, actualizar, dibujar
 // y finalizar el juego
@@ -44,6 +45,15 @@ protected:
 		cObject mExt;
 		cObject mInt;
 		cObject mMet;
+
+		// Enemigo 1 (Truck)
+		cResourceHandle mTruckNeu;
+		cResourceHandle mTruckArm;
+		cResourceHandle mTruckExt;
+		Truck mTruck;
+		cObject mTruckTire;
+		cObject mTruckExterior;
+		cObject mTruckWea;
 
 		cResourceHandle mItemCongelacion;
 
@@ -107,8 +117,7 @@ public:
 	// Devuelve el objeto entity
 //	CEntity GetEntity(){ return mEntity; }
 
-	unsigned GetGameWidth() { return mProperties.muiWidth; }
-	unsigned GetGameHeight() { return mProperties.muiHeight; }
+	Mustang GetMustang() { return mMustang; }
 };
 
 #endif

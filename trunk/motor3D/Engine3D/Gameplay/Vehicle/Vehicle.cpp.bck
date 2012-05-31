@@ -3,31 +3,84 @@
 #include "..\..\Graphics\GLHeaders.h"
 #include "..\..\Graphics\GraphicManager.h"
 
+int rightIndex = 0;
+int upIndex = 1;
+int forwardIndex = 2;
+
+const int maxProxies = 32766;
+const int maxOverlap = 65535;
+
+///btRaycastVehicle is the interface for the constraint that implements the raycast vehicle
+///notice that for higher-quality slow-moving vehicles, another approach might be better
+///implementing explicit hinged-wheel constraints with cylinder collision, rather then raycasts
+float	gEngineForce = 0.f;
+float	gBreakingForce = 0.f;
+
+float	maxEngineForce = 100000.f; //1500.f; //this should be engine/velocity dependent
+float	maxBreakingForce = 8000.f;  // 100.f; 
+
+float	gVehicleSteering = 0.f;
+float	steeringIncrement =  1.0f; //0.04f;
+float	steeringClamp = 0.3f;
+
+float	wheelRadius =  0.35f * PHYSCAR_SCALE;	//** 0.5f;
+float	wheelWidth = 0.2f * PHYSCAR_SCALE;		//* 0.4f;
+
+// The coefficient of friction between the tyre and the ground. 
+// Should be about 0.8 for realistic cars, but can increased for better handling.
+// Set large (10000.0) for kart racers
+float	wheelFriction = 10;						// 1000;//BT_LARGE_FLOAT;
+
+// The stiffness constant for the suspension. 
+// 10.0 - Offroad buggy, 50.0 - Sports car, 200.0 - F1 Car
+float	suspensionStiffness = 50.f;				// 20.f;
+
+// The damping coefficient for when the suspension is expanding. 
+// See the comments for wheelsDampingCompression for how to set k.
+// wheelsDampingRelaxation should be slightly larger than wheelsDampingCompression, eg 0.2 to 0.5
+float	suspensionDamping =	 0.3f * 2.0f * btSqrt(suspensionStiffness);	// 2.3f;
+
+// The damping coefficient for when the suspension is compressed. 
+// Set to k * 2.0 * btSqrt(suspensionStiffness) so k is proportional to critical damping.
+// k = 0.0 undamped & bouncy, k = 1.0 critical damping
+// 0.1 to 0.3 are good values
+float	suspensionCompression = 0.2f * 2.0f * btSqrt(suspensionStiffness);	// 4.4f;
+
+// Reduces the rolling torque applied from the wheels that cause the vehicle to roll over.
+// This is a bit of a hack, but it's quite effective. 0.0 = no roll, 1.0 = physical behaviour.
+// If m_frictionSlip is too high, you'll need to reduce this to stop the vehicle rolling over.
+// You should also try lowering the vehicle's centre of mass
+float	rollInfluence = 0.5f;							// 0.1f;  //1.0f;	*/
+
+/*float	gEngineForce = 0.f;
+float	gBreakingForce = 0.f;
+
+float	maxEngineForce = 1000.f;//this should be engine/velocity dependent
+float	maxBreakingForce = 100.f;
+
+float	gVehicleSteering = 0.f;
+float	steeringIncrement = 0.04f;
+float	steeringClamp = 0.3f;
+float	wheelRadius = 0.5f;
+float	wheelWidth = 0.4f;
+float	wheelFriction = 1000;//BT_LARGE_FLOAT;
+float	suspensionStiffness = 20.f;
+float	suspensionDamping = 2.3f;
+float	suspensionCompression = 4.4f;
+float	rollInfluence = 0.1f;//1.0f;
+
+
+btScalar suspensionRestLength(0.6);*/
+
+btVector3 wheelDirectionCS0(0,-1,0);
+btVector3 wheelAxleCS(-1,0,0);
+
+// The maximum length of the suspension (metres)
+btScalar suspensionRestLength = 0.15f * PHYSCAR_SCALE;  //** (0.6);
+
 Vehicle::Vehicle():
 	m_carChassis(0)
 	{
-		rightIndex = 0;
-		upIndex = 1;
-		forwardIndex = 2;
-
-		gEngineForce = 0.f;
-		gBreakingForce = 0.f;
-		maxEngineForce = 100000.f; //1500.f; //this should be engine/velocity dependent
-		maxBreakingForce = 8000.f;  // 100.f; 
-		gVehicleSteering = 0.f;
-		steeringIncrement =  1.0f; //0.04f;
-		steeringClamp = 0.3f;
-		wheelRadius =  0.35f * PHYSCAR_SCALE;	//** 0.5f;
-		wheelWidth = 0.2f * PHYSCAR_SCALE;		//* 0.4f;
-		wheelFriction = 10;						// 1000;//BT_LARGE_FLOAT;
-		suspensionStiffness = 50.f;				// 20.f;
-		suspensionDamping =	 0.3f * 2.0f * btSqrt(suspensionStiffness);	// 2.3f;
-		suspensionCompression = 0.2f * 2.0f * btSqrt(suspensionStiffness);	// 4.4f;
-		rollInfluence = 0.5f;
-		wheelDirectionCS0 = btVector3(0,-1,0);
-		wheelAxleCS = btVector3(-1,0,0);
-		suspensionRestLength = 0.15f * PHYSCAR_SCALE;  //** (0.6);
-
 		m_vehicle = 0;
 		m_wheelShape = 0;
 		m_vehicleRayCaster = NULL;
@@ -43,22 +96,9 @@ Vehicle::~Vehicle(void){
 	//if (m_chassisShape != NULL) delete m_chassisShape;
 }
 
-void Vehicle::initPhysics(string lsType){
+void Vehicle::initPhysics(){
 
-	float mass, connectionHeight;
-
-	if (lsType.compare("Mustang") == 0) {
-		m_chassisShape = new btBoxShape(btVector3(1.f, 0.5f, 2.f));
-		mass = 800.f;
-		connectionHeight = 1.2f;
-	}
-	else if (lsType.compare("Truck") == 0){
-		m_chassisShape = new btBoxShape(btVector3(1.5f, 1.2f, 2.7f));
-		mass = 1200.f;
-		connectionHeight = .85f;
-		wheelRadius =  0.54f;	//** 0.5f;
-		wheelWidth = 0.4f;		//* 0.4f;
-	}
+	m_chassisShape = new btBoxShape(btVector3(1.f,0.5f,2.f));
 
 	// stash this shape away
 	cPhysics::Get().getCollisionShapes().push_back(m_chassisShape);
@@ -71,12 +111,14 @@ void Vehicle::initPhysics(string lsType){
 	localTrans.setOrigin(btVector3(0,1.4,0));		//** localTrans.setOrigin(btVector3(0,1,0));
 
 	m_compound->addChildShape(localTrans,m_chassisShape);
+
+	float mass = 800.f;
 	
 	m_carChassis = cPhysics::Get().GetNewBody(m_compound, mass, cVec3(0.f, 0.f, 0.f), 329.9f); //chassisShape
 
 	//m_carChassis->setDamping(0.2,0.2);
 	
-	m_wheelShape = new btCylinderShapeX(btVector3(wheelWidth, wheelRadius, wheelRadius));
+	m_wheelShape = new btCylinderShapeX(btVector3(wheelWidth,wheelRadius,wheelRadius));
 	
 	ResetVehicleParams();
 
@@ -89,7 +131,9 @@ void Vehicle::initPhysics(string lsType){
 		///never deactivate the vehicle
 		m_carChassis->setActivationState(DISABLE_DEACTIVATION);
 
-		cPhysics::Get().GetBulletWorld()->addVehicle(m_vehicle);		//** ->addVehicle(m_vehicle);
+		cPhysics::Get().GetBulletWorld()->addAction(m_vehicle);		//** ->addVehicle(m_vehicle);
+
+		float connectionHeight = 1.2f;
 
 		bool isFrontWheel=true;
 
@@ -97,37 +141,23 @@ void Vehicle::initPhysics(string lsType){
 		m_vehicle->setCoordinateSystem(rightIndex, upIndex, forwardIndex);
 
 		// front left
-		btVector3 connectionPointCS0;
-		if (lsType.compare("Truck") == 0)
-			connectionPointCS0 = btVector3(CUBE_HALF_EXTENTS-(0.3*wheelWidth) + 0.25f,connectionHeight,(2*CUBE_HALF_EXTENTS-wheelRadius) + 0.2f);
-		else 
-			connectionPointCS0 = btVector3(CUBE_HALF_EXTENTS-(0.3*wheelWidth),connectionHeight,2*CUBE_HALF_EXTENTS-wheelRadius);
+		btVector3 connectionPointCS0(CUBE_HALF_EXTENTS-(0.3*wheelWidth),connectionHeight,2*CUBE_HALF_EXTENTS-wheelRadius);
 
 		m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);	
 			
 		// front right
-		if (lsType.compare("Truck") == 0)
-			connectionPointCS0 = btVector3(-CUBE_HALF_EXTENTS+(0.3*wheelWidth) - 0.25f,connectionHeight,(2*CUBE_HALF_EXTENTS-wheelRadius) + 0.2f);
-		else			
-			connectionPointCS0 = btVector3(-CUBE_HALF_EXTENTS+(0.3*wheelWidth),connectionHeight,2*CUBE_HALF_EXTENTS-wheelRadius);
+		connectionPointCS0 = btVector3(-CUBE_HALF_EXTENTS+(0.3*wheelWidth),connectionHeight,2*CUBE_HALF_EXTENTS-wheelRadius);
 
 		m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
 
 		// rear left
-		if (lsType.compare("Truck") == 0)
-			connectionPointCS0 = btVector3(-CUBE_HALF_EXTENTS+(0.3*wheelWidth) - 0.25f,connectionHeight,(-2*CUBE_HALF_EXTENTS+wheelRadius) + 0.18f);
-		else
-			connectionPointCS0 = btVector3(-CUBE_HALF_EXTENTS+(0.3*wheelWidth),connectionHeight,-2*CUBE_HALF_EXTENTS+wheelRadius);
-
+		connectionPointCS0 = btVector3(-CUBE_HALF_EXTENTS+(0.3*wheelWidth),connectionHeight,-2*CUBE_HALF_EXTENTS+wheelRadius);
 
 		isFrontWheel = false;
 		m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
 		
 		// rear right
-		if (lsType.compare("Truck") == 0)
-			connectionPointCS0 = btVector3(CUBE_HALF_EXTENTS-(0.3*wheelWidth) + 0.25f,connectionHeight,(-2*CUBE_HALF_EXTENTS+wheelRadius) + 0.18f);
-		else
-			connectionPointCS0 = btVector3(CUBE_HALF_EXTENTS-(0.3*wheelWidth),connectionHeight,-2*CUBE_HALF_EXTENTS+wheelRadius);
+		connectionPointCS0 = btVector3(CUBE_HALF_EXTENTS-(0.3*wheelWidth),connectionHeight,-2*CUBE_HALF_EXTENTS+wheelRadius);
 
 		btWheelInfo& wheel_RR = m_vehicle->addWheel(connectionPointCS0,wheelDirectionCS0,wheelAxleCS,suspensionRestLength,wheelRadius,m_tuning,isFrontWheel);
 		
@@ -326,7 +356,7 @@ void Vehicle::debugWheels(btScalar* m, const btCollisionShape* shape, const btVe
 		int index = 0;
 		const unsigned int* idx = hull->getIndexPointer();
 		const btVector3* vtx = hull->getVertexPointer();
-		glColor3f(1.0f, 0.0f, .0f);
+
 		glBegin (GL_TRIANGLES);
 
 		for (int i = 0; i < hull->numTriangles (); i++)
