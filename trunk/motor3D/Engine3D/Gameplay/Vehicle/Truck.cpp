@@ -70,7 +70,7 @@ void Truck::Update(float lfYaw, float lfPitch){
 	lmPostTranslation.LoadIdentity();
 	
 	// Calculo de la posicion del arma
-	cVec3 lvPosition = cGame::Get().GetMustang().GetVehicleBullet()->GetChasisPos()  - cGame::Get().GetMustang().GetVehicleBullet()->GetChasisRot();
+	cVec3 lvPosition = cGame::Get().GetMustang().GetVehicleBullet()->GetChasisPos();
 
 	cVec3 lvDirection = lvPosition - mTruckWea->GetWorldMatrix().GetPosition();
 	float yaw = atan2f(lvDirection.x, lvDirection.z);
