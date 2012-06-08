@@ -118,6 +118,7 @@ public:
 //	CEntity GetEntity(){ return mEntity; }
 
 	Mustang GetMustang() { return mMustang; }
+	Truck GetTruck() { return mTruck; }
 };
 
 #endif

@@ -22,7 +22,8 @@ enum eInputActions {
 	eIA_MousePitch = 11,			// Rotación eje X del ratón.
 	eIA_SwitchCamera = 12,			// Switch entre cámara juego/godmode.
 	eIA_SwitchFillLineMode = 13,	// Switch entre rasterizacion solida/wireframe.
-	eIA_SwitchCameraAux = 14,			// Cambia la cámara de detras hacia delante.
+	eIA_SwitchCameraAux = 14,		// Cambia la cámara de detras hacia delante.
+	eIA_Fire = 15,					// Disparo del arma principal
     eIA_Count						//Indica cuantas acciones de entrada hay.
 }; 
 

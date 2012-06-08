@@ -26,5 +26,6 @@ tActionMapping kaActionMapping[] = {
 	//	{ eIA_CloseApplication, eMouse, eMouse_ButtonMiddle }, //Esta fila indica que la acción salir con el mouse está asociada al botón central.	
 	{ eIA_SwitchFillLineMode, eKeyboard, OIS::KC_2 },	 // Esta fila asocia la tecla 1 con el cambiar la rasterizacion de solida a modo wireframe.
 	{ eIA_SwitchCameraAux, eKeyboard, OIS::KC_SPACE },		 // Esta fila asocia la tecla barra espaciadora con la funcion de cambiar la orientacion de la camara.
+	{ eIA_Fire, eMouse, eMouse_ButtonLeft },		 // Esta fila asocia la tecla izquierda del raton con la accion de disparo.
 	{ -1, -1, -1}  // End of the table (Marca el final de la tabla)
 };
