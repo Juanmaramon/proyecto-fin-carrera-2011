@@ -28,7 +28,7 @@ private:
 	cObject* mTruckWea;
 	cMatrix mScaleMatrix, lScaleMatrixChasis;
 	std::vector<cObject> maTires;
-
+	float mvPreviousYaw;
 };
 
 #endif

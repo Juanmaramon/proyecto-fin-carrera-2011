@@ -26,7 +26,7 @@ void Mustang::Init(cObject* mustangExterior, cObject* mustangInterior, cObject* 
 	lScaleMatrixChasis.LoadScale(.0308f);
 	//lScaleMatrix.LoadScale(.027f);
 	mScaleMatrix = lScaleMatrix;
-
+	mfPreviousYaw = 0.0f;
 }
 
 void Mustang::MoveForward(float lfTimestep){
@@ -49,7 +49,7 @@ void Mustang::SteeringRight(float lfTimestep){
 	mVehicle.SteeringRight(lfTimestep);
 }
 
-void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux){
+void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFireMainWeapon){
 	mVehicle.Update();
 
 	cMatrix lTransMatrix, lRotMatrix, lOffsetMatrix;
@@ -85,19 +85,65 @@ void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux){
 
 	char buff1[256];
 	sprintf(buff1, "--------------------------------------- \n");
-	OutputDebugStr(buff1);
+	//OutputDebugStr(buff1);
 	
 	// Calculo de la posicion del arma
 	cVec3 lvPosition = cVec3(resX, resY, resZ);
-	sprintf(buff1, "Target %f, %f, %f \n", lvPosition.x, lvPosition.y, lvPosition.z);
+	sprintf(buff1, "Mouse position %f, %f, %f \n", lvPosition.x, lvPosition.y, lvPosition.z);
 	//OutputDebugStr(buff1);
-	cVec3 lvDirection = lvPosition - mMusWea->GetWorldMatrix().GetPosition();
+	
+	sprintf(buff1, "Weapon position %f, %f, %f \n", mMusWea->GetWorldMatrix().GetPosition().x, mMusWea->GetWorldMatrix().GetPosition().y, mMusWea->GetWorldMatrix().GetPosition().z);
+	//OutputDebugStr(buff1);
+
+	cMatrix lmMustangPosition = cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()) * cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()).Invert();
+
+	cVec3 lvDirection = lvPosition - lmMustangPosition.GetPosition();
 	float yaw = atan2f(lvDirection.x, lvDirection.z);
+
+	float lfyaw = yaw * 0.1f + mfPreviousYaw * (1  - 0.1f);
+	mfPreviousYaw = lfyaw;
 
 	sprintf(buff1, "Direction %f, %f, %f \n", lvDirection.x, lvDirection.y, lvDirection.z);
 	//OutputDebugStr(buff1);
 
-	sprintf(buff1, "Final yaw: %f \n", -yaw);
+	// Start and End are vectors
+	cVec3 lvEnd = cVec3(lvDirection.x, mMusWea->GetWorldMatrix().GetPosition().y, lvDirection.z);
+	btCollisionWorld::ClosestRayResultCallback RayCallback(cPhysics::Get().Local2Bullet(mMusWea->GetWorldMatrix().GetPosition()), cPhysics::Get().Local2Bullet(lvEnd));
+
+	// Perform raycast
+	cPhysics::Get().GetBulletWorld()->rayTest(cPhysics::Get().Local2Bullet(mMusWea->GetWorldMatrix().GetPosition()), cPhysics::Get().Local2Bullet(lvEnd), RayCallback);
+	 
+	if(RayCallback.hasHit()) {
+		btVector3 End = RayCallback.m_hitPointWorld;
+		btVector3 Normal = RayCallback.m_hitNormalWorld;
+		btCollisionObject* lbCollisionObject = RayCallback.m_collisionObject;
+
+		btRigidBody* body = btRigidBody::upcast(RayCallback.m_collisionObject);
+		if (body) {
+			btTransform lmTransform = body->getWorldTransform();
+			btTransform chassisWorldTrans;
+			cGame::Get().GetTruck().GetVehicleBullet()->m_carChassis->getMotionState()->getWorldTransform(chassisWorldTrans);
+			sprintf(buff1, "chasisWorldTransformRay. %2.2f, %2.2f, %2.2f \n", cPhysics::Get().Bullet2Local(chassisWorldTrans).GetPosition().x, cPhysics::Get().Bullet2Local(chassisWorldTrans).GetPosition().y, cPhysics::Get().Bullet2Local(chassisWorldTrans).GetPosition().z);
+			OutputDebugStr(buff1);
+			sprintf(buff1, "chasisWorldTransformTruck. %2.2f, %2.2f, %2.2f \n", cPhysics::Get().Bullet2Local(lmTransform).GetPosition().x, cPhysics::Get().Bullet2Local(lmTransform).GetPosition().y, cPhysics::Get().Bullet2Local(lmTransform).GetPosition().z);
+			OutputDebugStr(buff1);
+			if (chassisWorldTrans == lmTransform) {
+
+				sprintf(buff1, "Hit! Hit! \n");
+				OutputDebugStr(buff1);
+			}
+		}
+
+
+
+
+		sprintf(buff1, "Point. %2.2f, %2.2f, %2.2f \n", cPhysics::Get().Bullet2Local(End).x, cPhysics::Get().Bullet2Local(End).y, cPhysics::Get().Bullet2Local(End).z);
+		//OutputDebugStr(buff1);
+
+		// Do some clever stuff here
+	}
+
+	sprintf(buff1, "Final yaw: %f \n", -lfyaw);
 	//OutputDebugStr(buff1);
 
 	// La camara es auxiliar las rotaciones son inversas (se ve de delante hacia atras)
@@ -111,7 +157,7 @@ void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux){
 		yaw = -yaw;
 	}
 
-	lRotMatrix.LoadRotation(cVec3(0.f, 1.f, 0.f), -yaw);
+	lRotMatrix.LoadRotation(cVec3(0.f, 1.f, 0.f), -lfyaw);
 
 	lOffsetMatrix.LoadTranslation( cVec3(4.5f, 1.4f, 0.5f ) );
 	lmPostTranslation.LoadTranslation(cVec3(0.f ,0.f, -0.5f));

@@ -15,7 +15,7 @@ public:
 	void Break(float lfTimestep);
 	void SteeringLeft(float lfTimestep);
 	void SteeringRight(float lfTimestep);
-	void Update(float lfYaw = 0.0f, float lfPitch = 0.0f, bool lbIsCameraAux = false);
+	void Update(float lfYaw = 0.0f, float lfPitch = 0.0f, bool lbIsCameraAux = false, bool lbFireMainWeapon = false);
 	Vehicle* GetVehicleBullet() { return &mVehicle; }
 	void Render();
 
@@ -28,6 +28,7 @@ private:
 	cObject* mMusWea;
 	cMatrix mScaleMatrix, lScaleMatrixChasis;
 	std::vector<cObject> maTires;
+	float mfPreviousYaw;
 };
 
 #endif

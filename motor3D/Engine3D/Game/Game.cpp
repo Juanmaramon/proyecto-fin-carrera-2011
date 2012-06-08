@@ -358,7 +358,12 @@ void cGame::Update( float lfTimestep )
 								   mMustang.GetVehicleBullet()->GetChasisPos() + lvYViewOffset, 
 								   cVec3(0.0f, 1.f, 0.f) );
 
-		mMustang.Update(lfYaw, lfPitch, lbAuxCamera);
+		bool lbFireMainWeapon = IsPressed( eIA_Fire );
+
+		if (lbFireMainWeapon)
+			OutputDebugStr("Fire!!\n");
+
+		mMustang.Update(lfYaw, lfPitch, lbAuxCamera, lbFireMainWeapon);
 		mTruck.Update();
 
 	// Modo Godmode	

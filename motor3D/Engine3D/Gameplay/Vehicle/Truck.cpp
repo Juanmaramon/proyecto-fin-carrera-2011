@@ -30,7 +30,7 @@ void Truck::Init(cObject* truckExterior, cObject* truckWeapon, cObject* truckTir
 	cMatrix lTransform;
 	lTransform.LoadTranslation(cVec3(0.f, 0.0f, -40.f));
 	mVehicle.m_carChassis->setWorldTransform(cPhysics::Get().Local2Bullet(lTransform));
-
+	mvPreviousYaw = 0.0f;
 }
 
 void Truck::MoveForward(float lfTimestep){
@@ -65,15 +65,19 @@ void Truck::Update(float lfYaw, float lfPitch){
 	// Acutlizacion de chasis, interior y metralleta
 	mTruckExt->SetWorldMatrix(lScaleMatrixChasis * lOffsetMatrix * cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()));
 
-	// La metralleta rota junto al chasis pero tambien siguiendo el raton
+	// La metralleta rota junto al chasis pero tambien siguiendoal jugador
 	cMatrix lmPostTranslation;
 	lmPostTranslation.LoadIdentity();
 	
-	// Calculo de la posicion del arma
-	cVec3 lvPosition = cGame::Get().GetMustang().GetVehicleBullet()->GetChasisPos();
+	// Calculo de la posicion del arma (se pasa la posicion del jugador al espacio del vehiculo truck)
+	cMatrix lvPosition = cPhysics::Get().Bullet2Local(cGame::Get().GetMustang().GetVehicleBullet()->m_vehicle->getChassisWorldTransform()) * cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()).Invert(); //->GetChasisPos();
 
-	cVec3 lvDirection = lvPosition - mTruckWea->GetWorldMatrix().GetPosition();
+	// La direccion del arma será la posicion del juegador menos la posicion del arma (que al estar en la posicion 0,0,0 se desprecia)
+	cVec3 lvDirection = lvPosition.GetPosition(); //- mTruckWea->GetWorldMatrix().GetPosition();
 	float yaw = atan2f(lvDirection.x, lvDirection.z);
+
+	float lyaw = yaw * 0.1 + mvPreviousYaw * (1 - 0.1);
+	mvPreviousYaw = lyaw;
 
 	//lRotMatrix.LoadRotation(cVec3(0.f, 1.f, 0.f), lfYaw);
 	lRotMatrix.LoadRotation(cVec3(0.f, 1.f, 0.f), yaw);
@@ -82,7 +86,7 @@ void Truck::Update(float lfYaw, float lfPitch){
 	lmPostTranslation.LoadTranslation(cVec3(0.f ,0.f, -1.05f));
 
 	// Se posiciona el arma
-	mTruckWea->SetWorldMatrix(lScaleMatrixChasis * lOffsetMatrix * lRotMatrix * lmPostTranslation *  cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()));
+	mTruckWea->SetWorldMatrix(lScaleMatrixChasis * lOffsetMatrix * lRotMatrix * lmPostTranslation * cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()));
 
 	lRotMatrix.LoadIdentity();
 
