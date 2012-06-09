@@ -31,6 +31,9 @@ void Truck::Init(cObject* truckExterior, cObject* truckWeapon, cObject* truckTir
 	lTransform.LoadTranslation(cVec3(0.f, 0.0f, -40.f));
 	mVehicle.m_carChassis->setWorldTransform(cPhysics::Get().Local2Bullet(lTransform));
 	mvPreviousYaw = 0.0f;
+
+	// Callback pointer to get this object from bullet collisionShape
+	mVehicle.m_chassisShape->setUserPointer(this);
 }
 
 void Truck::MoveForward(float lfTimestep){
@@ -79,8 +82,7 @@ void Truck::Update(float lfYaw, float lfPitch){
 	float lyaw = yaw * 0.1 + mvPreviousYaw * (1 - 0.1);
 	mvPreviousYaw = lyaw;
 
-	//lRotMatrix.LoadRotation(cVec3(0.f, 1.f, 0.f), lfYaw);
-	lRotMatrix.LoadRotation(cVec3(0.f, 1.f, 0.f), yaw);
+	lRotMatrix.LoadRotation(cVec3(0.f, 1.f, 0.f), lyaw);
 
 	lOffsetMatrix.LoadTranslation( cVec3(0.0f, 0.3f, 1.0f ) );
 	lmPostTranslation.LoadTranslation(cVec3(0.f ,0.f, -1.05f));
@@ -112,10 +114,10 @@ void Truck::Update(float lfYaw, float lfPitch){
 			//lmPostTranslation.LoadIdentity();
 			cMatrix rotate;
 			rotate.LoadRotation(cVec3(0.f, 1.f, 0.f), PI);
-			maTires[i].SetWorldMatrix(mScaleMatrix * lOffsetMatrix * rotate *  lRotMatrix /** lmPostTranslation*/ * lTransMatrix);
+			maTires[i].SetWorldMatrix(mScaleMatrix * lOffsetMatrix * rotate *  lRotMatrix * lTransMatrix);
 		}else{
 			lmPostTranslation.LoadTranslation(cVec3(-0.25f ,0.f, 0.0f));
-			maTires[i].SetWorldMatrix(mScaleMatrix * lOffsetMatrix * lRotMatrix /** lmPostTranslation*/ * lTransMatrix);
+			maTires[i].SetWorldMatrix(mScaleMatrix * lOffsetMatrix * lRotMatrix * lTransMatrix);
 		}
 
 	}	
