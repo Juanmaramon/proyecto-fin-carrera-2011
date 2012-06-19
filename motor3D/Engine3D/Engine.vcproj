@@ -740,6 +740,18 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="Bullet"
+				>
+				<File
+					RelativePath=".\Gameplay\Bullet\Bullet.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Gameplay\Bullet\Bullet.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="LoadXML"

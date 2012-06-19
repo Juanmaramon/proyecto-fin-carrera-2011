@@ -5,6 +5,7 @@
 #include "..\..\Game\Game.h"
 #include "..\..\Graphics\Camera.h"
 #include "..\..\Physics\cPhysics.h"
+#include "..\..\Graphics\GraphicManager.h"
 
 void Mustang::Init(cObject* mustangExterior, cObject* mustangInterior, cObject* mustangWeapon, cObject* mustangTires){
 
@@ -27,6 +28,7 @@ void Mustang::Init(cObject* mustangExterior, cObject* mustangInterior, cObject* 
 	//lScaleMatrix.LoadScale(.027f);
 	mScaleMatrix = lScaleMatrix;
 	mfPreviousYaw = 0.0f;
+	mBullets.Init(WEAPON_RANGE);
 }
 
 void Mustang::MoveForward(float lfTimestep){
@@ -50,6 +52,8 @@ void Mustang::SteeringRight(float lfTimestep){
 }
 
 void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFireMainWeapon){
+	mbIsFiring = false;
+
 	mVehicle.Update();
 
 	cMatrix lTransMatrix, lRotMatrix, lOffsetMatrix;
@@ -84,15 +88,10 @@ void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFire
 				&resX, &resY, &resZ);
 
 	char buff1[256];
-	sprintf(buff1, "--------------------------------------- \n");
-	//OutputDebugStr(buff1);
 	
 	// -- Calculo de la posicion del arma
 
 	cVec3 lvPosition = cVec3(resX, resY, resZ);
-	
-	//sprintf(buff1, "Weapon position %f, %f, %f \n", mMusWea->GetWorldMatrix().GetPosition().x, mMusWea->GetWorldMatrix().GetPosition().y, mMusWea->GetWorldMatrix().GetPosition().z);
-	//OutputDebugStr(buff1);
 
 	// Paso la posicion del protagonista a coordenadas del protagonista
 	cMatrix lmMustangPosition = cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()) * cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()).Invert();
@@ -100,42 +99,13 @@ void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFire
 	cVec3 lvDirection = lvPosition - lmMustangPosition.GetPosition();
 	float yaw = atan2f(lvDirection.x, lvDirection.z);
 
-	//sprintf(buff1, "Direction %f, %f, %f \n", lvDirection.x, lvDirection.y, lvDirection.z);
-	//OutputDebugStr(buff1);
-
 	// Inercia
 	float lfyaw = yaw * 0.1f + mfPreviousYaw * (1  - 0.1f);
 	mfPreviousYaw = lfyaw;
 
-	// Start and End are vectors
-	cVec3 lvEnd = cVec3(lvDirection.x, mMusWea->GetWorldMatrix().GetPosition().y, lvDirection.z);
-	btCollisionWorld::ClosestRayResultCallback RayCallback(cPhysics::Get().Local2Bullet(mMusWea->GetWorldMatrix().GetPosition()), cPhysics::Get().Local2Bullet(lvEnd));
-
-	// Perform raycast
-	cPhysics::Get().GetBulletWorld()->rayTest(cPhysics::Get().Local2Bullet(mMusWea->GetWorldMatrix().GetPosition()), cPhysics::Get().Local2Bullet(lvEnd), RayCallback);
-
-	if(RayCallback.hasHit()) {
-		btVector3 End = RayCallback.m_hitPointWorld;
-		btVector3 Normal = RayCallback.m_hitNormalWorld;
-		btCollisionObject* lbCollisionObject = RayCallback.m_collisionObject;
-
-		btRigidBody* body = btRigidBody::upcast(RayCallback.m_collisionObject);
-		
-		if (body) {
-
-			Truck* lpBodyPtr = (Truck*)body->getUserPointer();
-
-			if (lpBodyPtr != NULL) {
-				sprintf(buff1, "Hit! Hit! \n");
-				OutputDebugStr(buff1);
-			}
-
-		}
-	}
-
 	// La camara es auxiliar las rotaciones son inversas (se ve de delante hacia atras)
 	if (lbIsCameraAux)
-		yaw = -yaw;
+		lfyaw = -lfyaw;
 
 	lRotMatrix.LoadRotation(cVec3(0.f, 1.f, 0.f), -lfyaw);
 
@@ -145,6 +115,58 @@ void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFire
 	// Se posiciona el arma
 	mMusWea->SetWorldMatrix(lScaleMatrixChasis * lOffsetMatrix * lRotMatrix * lmPostTranslation *  cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()));
 
+	// Si se esta disparando, raytest para detectar si el disparo choca con algun enemigo
+	if (lbFireMainWeapon) {
+		mbIsFiring = true;
+		mbHit = false;
+		OutputDebugStr("Fire!!\n");
+		
+		// Start and End are vectors
+		cVec3 lvEnd;
+		cVec3 lvStart;
+
+		TransformPoint( lvStart, cVec3(-146.0f, 41.0f, 10.0f ), mMusWea->GetWorldMatrix() );
+		TransformPoint( lvEnd, cVec3(-146.f, 41.f, WEAPON_RANGE), mMusWea->GetWorldMatrix() );
+
+		btCollisionWorld::ClosestRayResultCallback RayCallback(cPhysics::Get().Local2Bullet(lvStart), cPhysics::Get().Local2Bullet(lvEnd));
+
+		// Perform raycast
+		cPhysics::Get().GetBulletWorld()->rayTest(cPhysics::Get().Local2Bullet(lvStart), cPhysics::Get().Local2Bullet(lvEnd), RayCallback);
+
+		if(RayCallback.hasHit()) {
+			mbHit = true;
+			btVector3 End = RayCallback.m_hitPointWorld;
+			mvRayHitPosition = cPhysics::Get().Bullet2Local(End);
+			btVector3 Normal = RayCallback.m_hitNormalWorld;
+			btCollisionObject* lbCollisionObject = RayCallback.m_collisionObject;
+
+			btRigidBody* body = btRigidBody::upcast(RayCallback.m_collisionObject);
+			
+			if (body) {
+
+				Truck* lpBodyPtr = (Truck*)body->getUserPointer();
+
+				if (lpBodyPtr != NULL) {
+					sprintf(buff1, "Hit! Hit!\n");
+					OutputDebugStr(buff1);
+				}
+				else {
+					sprintf(buff1, "\n\n\n");
+					OutputDebugStr(buff1);
+				}
+			}
+		}
+
+
+		cVec3 lvHit;
+		if (mbHit)
+			TransformPoint( lvHit, mvRayHitPosition, mMusWea->GetWorldMatrix().Invert() );
+		else
+			lvHit = lvEnd;
+
+		mBullets.Create(lvStart, lvHit, lfyaw);
+	}
+
 	lRotMatrix.LoadIdentity();
 
 	// Actualizacion ruedas
@@ -152,12 +174,9 @@ void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFire
 
 		//synchronize the wheels with the (interpolated) chassis worldtransform
 		mVehicle.m_vehicle->updateWheelTransform(i,true);
-	
-		//glPushMatrix();
 		
 		// Calcula  translacion rueda
 		cVec3 lTranslation = cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getWheelInfo(i).m_worldTransform.getOrigin());
-
 
 		/*if (lTranslation.DistanceTo(cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()).GetPosition()) > 2.0f) {
 			char buff2[256];
@@ -186,9 +205,9 @@ void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFire
 		}else{
 			maTires[i].SetWorldMatrix(mScaleMatrix * lOffsetMatrix * lRotMatrix * lTransMatrix);
 		}
+	}
 
-		//glPopMatrix();
-	}	
+	mBullets.Update();
 }
 
 void Mustang::Render(){
@@ -197,15 +216,42 @@ void Mustang::Render(){
 	for (int i = 0; i < mVehicle.m_vehicle->getNumWheels() ; i++) {
 		maTires[i].Render();
 	}
+
+	if (mbIsFiring) {
+		glEnable(GL_BLEND);
+
+		glBlendFunc(GL_DST_COLOR, GL_ONE);
+
+		cMatrix lmPosMatrix;
+		cGraphicManager::Get().SetWorldMatrix(mMusWea->GetWorldMatrix());
+
+		cVec3 lvHitPoint;
+
+		// Si el rayo choca con un objeto entonces se para en ese objeto, si no hasta el alcance del arma 
+		if (mbHit)
+			TransformPoint( lvHitPoint, mvRayHitPosition, mMusWea->GetWorldMatrix().Invert() );
+		else
+			lvHitPoint = cVec3(-146.f, 41.f, WEAPON_RANGE);
+
+			cGraphicManager::Get().DrawLine(cVec3(-146.0f, 41.0f, 10.0f ), lvHitPoint, cVec3(1.f, 0.f, 0.f), 0.5f);
+			cGraphicManager::Get().DrawSphere(lvHitPoint, cVec3(1.f, 0.f, 0.f));
+
+		cGraphicManager::Get().SetWorldMatrix(lmPosMatrix.LoadIdentity());
+
+		glDisable(GL_BLEND);
+		glColor4f(1,1,1,1.);
+	}
+
 	// Renderiza interior
 	mMusInt->Render();
 
+	// Renderiza el arma
 	mMusWea->Render();
-
 
 	// Renderiza chasis
 	mMusExt->Render();
 
+	mBullets.Render();
 }
 
 void Mustang::Deinit(){
@@ -216,4 +262,7 @@ void Mustang::Deinit(){
 	}
 
 	maTires.empty();
+
+	mBullets.Deinit();
+
 }
