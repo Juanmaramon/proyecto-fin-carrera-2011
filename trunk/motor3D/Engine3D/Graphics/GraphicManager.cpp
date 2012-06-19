@@ -142,10 +142,38 @@ void cGraphicManager::DrawPoint( const cVec3 &lvPosition, const cVec3 &lvColor )
    glEnable(GL_TEXTURE_2D);
 }
 
+//Función para renderizar una esfera en el espacio.
+//El primer parámetro es la posición donde 
+// se renderizará el punto y el segundo parámetro será el color representado por RGB 
+// entre 0.0 y 1.0.
+void cGraphicManager::DrawSphere( const cVec3 &lvPosition, const cVec3 &lvColor )
+{
+   //Antes de pintar las primitivas se desactivan el uso de texturas y después se vuelve a activar, 
+   //esto se hace para asegurarnos de que el uso de texturas no impide el renderizado de estas primitivas. 	
+   glDisable(GL_TEXTURE_2D);
+ 
+
+   GLUquadricObj *quadratic;
+   quadratic=gluNewQuadric(); 
+   gluQuadricNormals(quadratic, GLU_SMOOTH);
+
+   glTranslatef(lvPosition.x, lvPosition.y, lvPosition.z);
+
+   glColor3f (lvColor.x, lvColor.y, lvColor.z);
+  // glBegin(GL_POINTS);
+
+   gluSphere(quadratic, 1.3f, 24, 24);
+
+   //glEnd ();
+   glEnable(GL_TEXTURE_2D);
+
+
+}
+
 //Función para rederizar una línea.
 void cGraphicManager::DrawLine( const cVec3 &lvPosition1, 
   const cVec3 &lvPosition2, 
-  const cVec3 &lvColor )
+  const cVec3 &lvColor, float alpha )
 {
    //Antes de pintar las primitivas se desactivan el uso de texturas y después se vuelve a activar, 
    //esto se hace para asegurarnos de que el uso de texturas no impide el renderizado de estas primitivas. 	
@@ -153,9 +181,9 @@ void cGraphicManager::DrawLine( const cVec3 &lvPosition1,
  
    // LINE
    glLineWidth (1);
-   glColor3f (lvColor.x, lvColor.y, lvColor.z);
+   glColor4f (lvColor.x, lvColor.y, lvColor.z, alpha);
    glBegin(GL_LINES);
-   for (float xtmp = -10.0; xtmp <= 10.0; xtmp += 1.0)
+   for (float xtmp = -20.0; xtmp <= 20.0; xtmp += 1.0)
    {
       glVertex3f(lvPosition1.x, lvPosition1.y, lvPosition1.z);
       glVertex3f(lvPosition2.x, lvPosition2.y, lvPosition2.z);

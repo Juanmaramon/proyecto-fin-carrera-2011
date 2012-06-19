@@ -27,8 +27,10 @@ class cGraphicManager : public cSingleton<cGraphicManager>
 	  // entre 0.0 y 1.0.
 	  void DrawPoint( const cVec3 &lvPosition, const cVec3 &lvColor );
 
+	  void DrawSphere( const cVec3 &lvPosition, const cVec3 &lvColor );
+
 	  //Función para rederizar una línea.
-	  void DrawLine( const cVec3 &lvPosition1, const cVec3 &lvPosition2, const cVec3 &lvColor );
+	  void DrawLine( const cVec3 &lvPosition1, const cVec3 &lvPosition2, const cVec3 &lvColor, const float alpha  = 1.0f    );
 
 	  //Función para renderizar una malla o una rejilla.
 	  void DrawGrid();

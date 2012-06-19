@@ -42,9 +42,9 @@ void cObject::Render()
 		float lfYaw = GetValue( eIA_MouseYaw );
 		float lfPitch = GetValue( eIA_MousePitch );
 		//cGraphicManager::Get().DrawLine(cVec3(-146.0f, 41.0f, 10.0f ), cVec3(lfYaw, lfPitch, 1.f), cVec3(1.f, 0.f, 0.f));
-		cGraphicManager::Get().DrawLine(cVec3(-146.0f, 41.0f, 10.0f ), cVec3(-146.f, 41.f, 300.f), cVec3(1.f, 0.f, 0.f));
+		//cGraphicManager::Get().DrawLine(cVec3(-146.0f, 41.0f, 10.0f ), cVec3(-146.f, 41.f, 300.f), cVec3(1.f, 0.f, 0.f));
 
-		cGraphicManager::Get().DrawPoint(cVec3(-146.f, 41.f, 10.f),cVec3(1.f, 0.f, 0.f));
+		//cGraphicManager::Get().DrawPoint(cVec3(-146.f, 41.f, 10.f),cVec3(1.f, 0.f, 0.f));
 		//cGraphicManager::Get().DrawAxis();	
 	}
 	for (unsigned luiIndex = 0; luiIndex < mMeshHandles.size(); ++luiIndex){

@@ -92,7 +92,7 @@ bool cGame::Init()
 			cPhysics::Get().Init();
 
 			//Se inicializa la clase que gestiona la texturas indicando que habrá 1, por ejemplo.
-			cTextureManager::Get().Init(40);
+			cTextureManager::Get().Init(30);
 
 			// Terrain object
 			mHeightmap.Load();
@@ -104,10 +104,10 @@ bool cGame::Init()
 //			mEntity.Init();
 
 			//Se inicializa la clase que gestiona los materiales.
-			cMaterialManager::Get().Init(40);
+			cMaterialManager::Get().Init(30);
 
 			// Init of effects management
-			cEffectManager::Get().Init(30);
+			cEffectManager::Get().Init(20);
 
 			//Init Camera 2D, para las cadenas de texto.
 			//Se inicializa la cámara 2D con una perspectiva ortogonal.
@@ -127,10 +127,10 @@ bool cGame::Init()
 			mFont.Init("./Data/Fonts/Test1.fnt");
 
 			//Se inicializa el gestor de mallas: habrá 4 mallas en la escena (mirar ./Data/Scene/) + Skeletal mesh.
-			cMeshManager::Get().Init(40);
+			cMeshManager::Get().Init(30);
 
 			//Se inicializa el gestor de escenas.
-			cSceneManager::Get().Init(40);   
+			cSceneManager::Get().Init(30);   
 
 			//Se carga la escena.
 			//mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/dragonsmall.DAE" ); 		
@@ -360,9 +360,6 @@ void cGame::Update( float lfTimestep )
 
 		bool lbFireMainWeapon = IsPressed( eIA_Fire );
 
-		if (lbFireMainWeapon)
-			OutputDebugStr("Fire!!\n");
-
 		mMustang.Update(lfYaw, lfPitch, lbAuxCamera, lbFireMainWeapon);
 		mTruck.Update();
 
@@ -529,11 +526,9 @@ void cGame::Render()
 		maSphereObjects[luiIndex].Render();	
 	}	*/	
 
-	//mVehicle.renderme();
-//	mMustang.GetVehicleBullet()->renderme();
-	mMustang.Render();
-
 	mTruck.Render();
+
+	mMustang.Render();
 
 	// 3.4) Render of the skeleton mesh
 	// -------------------------------------------------------------

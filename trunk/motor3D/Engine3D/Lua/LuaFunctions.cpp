@@ -36,7 +36,8 @@ int CreatePatrol(lua_State* lpLuaContext){
 	lpCharacterPrueba->SetAngSpeed(liAngSpeed);
 
 	//Se crea el comportamiento de perseguidor.
-	cBehaviourBase *lpBehaviour = cBehaviourManager::Get().CreateBehaviour(cBehaviourManager::ePATROL);
+	//cBehaviourBase *lpBehaviour = cBehaviourManager::Get().CreateBehaviour(cBehaviourManager::ePATROL);
+	cBehaviourBase *lpBehaviour = cBehaviourManager::Get().CreateBehaviour(cBehaviourManager::eCHASER_WITH_ORIENTATION);
 	//Se incializa el comportamiento.
 	//lpBehaviour->Init(lpCharacterPrueba);
 

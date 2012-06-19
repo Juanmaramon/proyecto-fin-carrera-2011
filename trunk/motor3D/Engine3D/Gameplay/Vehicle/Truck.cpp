@@ -33,7 +33,7 @@ void Truck::Init(cObject* truckExterior, cObject* truckWeapon, cObject* truckTir
 	mvPreviousYaw = 0.0f;
 
 	// Callback pointer to get this object from bullet collisionShape
-	mVehicle.m_chassisShape->setUserPointer(this);
+	mVehicle.m_carChassis->setUserPointer(this);
 }
 
 void Truck::MoveForward(float lfTimestep){
@@ -137,7 +137,7 @@ void Truck::Render(){
 	mTruckExt->Render();
 
 	//mVehicle.renderme();
-
+	
 }
 
 void Truck::Deinit(){

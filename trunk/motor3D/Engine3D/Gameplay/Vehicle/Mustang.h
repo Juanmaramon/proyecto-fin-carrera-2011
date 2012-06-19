@@ -5,6 +5,9 @@
 
 #include "Vehicle.h"
 #include "..\..\Physics\cPhysicObject.h"
+#include "..\Bullet\Bullet.h" 
+
+#define WEAPON_RANGE 100000.f
 
 class Mustang{
 
@@ -28,7 +31,13 @@ private:
 	cObject* mMusWea;
 	cMatrix mScaleMatrix, lScaleMatrixChasis;
 	std::vector<cObject> maTires;
+	// Para implementar la inercia de la torreta
 	float mfPreviousYaw;
+	// Esta disparando el protagonista?
+	bool mbIsFiring, mbHit;
+	// Punto en el que choca el rayo del arma 
+	cVec3 mvRayHitPosition;
+	Bullet mBullets;
 };
 
 #endif
