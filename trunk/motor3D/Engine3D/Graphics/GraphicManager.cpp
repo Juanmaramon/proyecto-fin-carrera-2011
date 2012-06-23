@@ -157,12 +157,16 @@ void cGraphicManager::DrawSphere( const cVec3 &lvPosition, const cVec3 &lvColor 
    quadratic=gluNewQuadric(); 
    gluQuadricNormals(quadratic, GLU_SMOOTH);
 
+   glPushMatrix();
+
    glTranslatef(lvPosition.x, lvPosition.y, lvPosition.z);
 
    glColor3f (lvColor.x, lvColor.y, lvColor.z);
   // glBegin(GL_POINTS);
 
    gluSphere(quadratic, 1.3f, 24, 24);
+
+   glPopMatrix();
 
    //glEnd ();
    glEnable(GL_TEXTURE_2D);

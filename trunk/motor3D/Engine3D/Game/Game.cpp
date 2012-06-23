@@ -92,7 +92,7 @@ bool cGame::Init()
 			cPhysics::Get().Init();
 
 			//Se inicializa la clase que gestiona la texturas indicando que habrá 1, por ejemplo.
-			cTextureManager::Get().Init(30);
+			cTextureManager::Get().Init(40);
 
 			// Terrain object
 			mHeightmap.Load();
@@ -147,7 +147,9 @@ bool cGame::Init()
 			mTruckNeu = cSceneManager::Get().LoadResource( "Truck_neumatico", "./Data/Scene/enemigo1_rueda.dae" );
 			mTruckArm = cSceneManager::Get().LoadResource( "Truck_arma", "./Data/Scene/enemigo1_arma.dae" );
 			mTruckExt = cSceneManager::Get().LoadResource( "Truck_exterior", "./Data/Scene/enemigo1_exterior.dae" );
-
+			mWeaponMuzzle1 = cTextureManager::Get().LoadResource( "Weapon_muzzle1", "Data/Scene/images/flash_disparo/muzzle_flash_1.jpg" ); 
+			mWeaponMuzzle2 = cTextureManager::Get().LoadResource( "Weapon_muzzle2", "Data/Scene/images/flash_disparo/muzzle_flash_2.jpg" );
+			mWeaponMuzzle3 = cTextureManager::Get().LoadResource( "Weapon_muzzle3", "Data/Scene/images/flash_disparo/muzzle_flash_3.jpg" );
 //			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo2_exterior.dae" );
 //			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo2.dae" );
 //			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo2_arma.dae" );
@@ -238,7 +240,7 @@ bool cGame::Init()
 			mExt = *((cObject*) ((cScene *)mMusExt.GetResource())->getSubObject(0));
 			mInt = *((cObject*) ((cScene *)mMusInt.GetResource())->getSubObject(0));
 			mMet = *((cObject*) ((cScene *)mMusMet.GetResource())->getSubObject(0));
-			mMustang.Init(&mExt, &mInt, &mMet, &mTire);
+			mMustang.Init(&mExt, &mInt, &mMet, &mTire, &mWeaponMuzzle1, &mWeaponMuzzle2, &mWeaponMuzzle3);
 
 			// Incializacion de enemigo 1 (Truck)
 			mTruckExterior = *((cObject*) ((cScene *)mTruckExt.GetResource())->getSubObject(0));
