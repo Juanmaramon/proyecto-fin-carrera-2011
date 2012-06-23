@@ -8,11 +8,13 @@
 #include "..\Bullet\Bullet.h" 
 
 #define WEAPON_RANGE 100000.f
+#define FRAME_DELAY 4
 
 class Mustang{
 
 public:
-	void Init(cObject* mustangExterior, cObject* mustangInterior, cObject* mustangWeapon, cObject* mustangTires);
+	void Init(cObject* mustangExterior, cObject* mustangInterior, cObject* mustangWeapon, cObject* mustangTires, 
+			  cResourceHandle* weapon_muzzle1, cResourceHandle* weapon_muzzle2, cResourceHandle* weapon_muzzle3);
 	void Deinit();
 	void MoveForward(float lfTimestep);
 	void Break(float lfTimestep);
@@ -23,6 +25,8 @@ public:
 	void Render();
 
 private: 
+	void RenderRayGunMuzzle ();
+
 	// Modelo físico del vehiculo 
 	Vehicle mVehicle;
 	// Modelos 3d de las distintas partes del vehiculo
@@ -34,10 +38,17 @@ private:
 	// Para implementar la inercia de la torreta
 	float mfPreviousYaw;
 	// Esta disparando el protagonista?
-	bool mbIsFiring, mbHit;
+	bool mbIsFiring, mbHit, mbLaserHit, mbIsCamAux;
 	// Punto en el que choca el rayo del arma 
-	cVec3 mvRayHitPosition;
+	cVec3 mvRayHitPosition, mvRayLaserHitPosition;
 	Bullet mBullets;
+	// Punto final del rayo que simula la trayectoria de la bala
+	cVec3 mvEnd;
+	cResourceHandle* mWeaponMuzzle1;
+	cResourceHandle* mWeaponMuzzle2;
+	cResourceHandle* mWeaponMuzzle3;
+	int miFlashSeq;
+	cMatrix mBillboardMatrix;
 };
 
 #endif

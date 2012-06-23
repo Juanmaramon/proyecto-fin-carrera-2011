@@ -6,8 +6,10 @@
 #include "..\..\Graphics\Camera.h"
 #include "..\..\Physics\cPhysics.h"
 #include "..\..\Graphics\GraphicManager.h"
+#include "../../Graphics/Textures/Texture.h"
 
-void Mustang::Init(cObject* mustangExterior, cObject* mustangInterior, cObject* mustangWeapon, cObject* mustangTires){
+void Mustang::Init(cObject* mustangExterior, cObject* mustangInterior, cObject* mustangWeapon, cObject* mustangTires, 
+				   cResourceHandle* weapon_muzzle1, cResourceHandle* weapon_muzzle2, cResourceHandle* weapon_muzzle3) {
 
 	// Inicializacion de físicas del vehiculo
 	mVehicle.initPhysics("Mustang");
@@ -29,6 +31,14 @@ void Mustang::Init(cObject* mustangExterior, cObject* mustangInterior, cObject* 
 	mScaleMatrix = lScaleMatrix;
 	mfPreviousYaw = 0.0f;
 	mBullets.Init(WEAPON_RANGE);
+	// Texturas de fogonazo arma
+	mWeaponMuzzle1 = weapon_muzzle1;
+	mWeaponMuzzle2 = weapon_muzzle2;
+	mWeaponMuzzle3 = weapon_muzzle3;
+	// Secuencia de animacion fogonazo arma
+	miFlashSeq = 0;
+	// Matriz de rotacion para el billboard del fogonazo
+	mBillboardMatrix.LoadIdentity();
 }
 
 void Mustang::MoveForward(float lfTimestep){
@@ -53,6 +63,7 @@ void Mustang::SteeringRight(float lfTimestep){
 
 void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFireMainWeapon){
 	mbIsFiring = false;
+	mbIsCamAux = lbIsCameraAux;
 
 	mVehicle.Update();
 
@@ -115,10 +126,10 @@ void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFire
 	// Se posiciona el arma
 	mMusWea->SetWorldMatrix(lScaleMatrixChasis * lOffsetMatrix * lRotMatrix * lmPostTranslation *  cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()));
 
-	// Si se esta disparando, raytest para detectar si el disparo choca con algun enemigo
+	// Si se esta disparando, raytest para simular el rayo del laser de la ametralladora
 	if (lbFireMainWeapon) {
 		mbIsFiring = true;
-		mbHit = false;
+		mbLaserHit = false;
 		OutputDebugStr("Fire!!\n");
 		
 		// Start and End are vectors
@@ -128,12 +139,71 @@ void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFire
 		TransformPoint( lvStart, cVec3(-146.0f, 41.0f, 10.0f ), mMusWea->GetWorldMatrix() );
 		TransformPoint( lvEnd, cVec3(-146.f, 41.f, WEAPON_RANGE), mMusWea->GetWorldMatrix() );
 
+		btCollisionWorld::ClosestRayResultCallback RayCallbackLaser(cPhysics::Get().Local2Bullet(lvStart), cPhysics::Get().Local2Bullet(lvEnd));
+
+		// Perform raycast
+		cPhysics::Get().GetBulletWorld()->rayTest(cPhysics::Get().Local2Bullet(lvStart), cPhysics::Get().Local2Bullet(lvEnd), RayCallbackLaser);
+
+		if (RayCallbackLaser.hasHit()) {
+			mbLaserHit = true;
+			btVector3 LaserEnd = RayCallbackLaser.m_hitPointWorld;
+			mvRayLaserHitPosition = cPhysics::Get().Bullet2Local(LaserEnd);
+			btVector3 Normal = RayCallbackLaser.m_hitNormalWorld;
+			btCollisionObject* lbCollisionObject = RayCallbackLaser.m_collisionObject;
+
+			btRigidBody* body = btRigidBody::upcast(RayCallbackLaser.m_collisionObject);
+			
+			if (body) {
+
+				Truck* lpBodyPtr = (Truck*)body->getUserPointer();
+
+				if (lpBodyPtr != NULL) {
+					sprintf(buff1, "Hit! Hit!\n");
+					//OutputDebugStr(buff1);
+				}
+				else {
+					sprintf(buff1, "\n\n\n");
+					//OutputDebugStr(buff1);
+				}
+			}
+		}
+
+
+		cVec3 lvHit;
+		if (mbLaserHit)
+			TransformPoint( lvHit, mvRayHitPosition, mMusWea->GetWorldMatrix().Invert() );
+		else
+			lvHit = lvEnd;
+
+
+		// Ahora se calcula la trayectoria de la bala real
+		// Antes se calculo el rayo del laser de la torreta
+		float a = -30.0f;
+		float b = 30.0f;
+		float deviation_x = ((b - a) * ((float)rand() / RAND_MAX)) + a;
+		float deviation_y = ((b - a) * ((float)rand() / RAND_MAX)) + a;
+		float deviation_z = ((b - a) * ((float)rand() / RAND_MAX)) + a;
+		//float deviation = rand() % 10;
+		
+		TransformPoint( lvStart, cVec3(-146.0f, 41.0f, 10.0f ), mMusWea->GetWorldMatrix() );
+		TransformPoint( lvEnd, cVec3(-146.f + deviation_x, 41.f + deviation_y, WEAPON_RANGE +  deviation_z), mMusWea->GetWorldMatrix() );
+
+		sprintf(buff1, " ini_x: %2.2f, ini_y: %2.2f, ini_z: %2.2f \n", -146.f, 41.f ,WEAPON_RANGE);
+		//OutputDebugStr(buff1);
+
+		sprintf(buff1, " final_x: %2.2f, final_y: %2.2f, final_z: %2.2f \n", -146.f + deviation_x, 41.f + deviation_y, WEAPON_RANGE +  deviation_z);
+		//OutputDebugStr(buff1);
+
+
 		btCollisionWorld::ClosestRayResultCallback RayCallback(cPhysics::Get().Local2Bullet(lvStart), cPhysics::Get().Local2Bullet(lvEnd));
 
 		// Perform raycast
 		cPhysics::Get().GetBulletWorld()->rayTest(cPhysics::Get().Local2Bullet(lvStart), cPhysics::Get().Local2Bullet(lvEnd), RayCallback);
 
-		if(RayCallback.hasHit()) {
+		// Se guarda la posicion final
+		mvRayHitPosition = lvEnd;
+
+		if (RayCallback.hasHit()) {
 			mbHit = true;
 			btVector3 End = RayCallback.m_hitPointWorld;
 			mvRayHitPosition = cPhysics::Get().Bullet2Local(End);
@@ -158,13 +228,25 @@ void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFire
 		}
 
 
-		cVec3 lvHit;
-		if (mbHit)
-			TransformPoint( lvHit, mvRayHitPosition, mMusWea->GetWorldMatrix().Invert() );
-		else
-			lvHit = lvEnd;
+		//mBullets.Create(lvStart, lvHit, lfyaw);
 
-		mBullets.Create(lvStart, lvHit, lfyaw);
+		// Se construye la matriz de rotacion para el billboard del fogonazo del arma
+		// Primero se crea el vector que une la camara con el billboard
+		cVec3 lvLook = cGame::Get().Get3DCamera().GetPosition() - lvStart;
+		// Se normaliza
+		lvLook.Normalize();
+		// Ahora calculo el vector derecha del billboard (producto vectorial entre el vector look y el vector up (de la camara))
+		cVec3 lvRight, lvUp;
+		Cross(lvRight, cGame::Get().Get3DCamera().GetUp().Normalize(), lvLook);
+		// Calculo el vector up del propio billboard
+		Cross(lvUp, lvLook, lvRight);
+		// Se compone la matriz de rotacion del billboard
+		cVec4 lvColumn1 = cVec4(lvRight, 0.f); 
+		cVec4 lvColumn2 = cVec4(lvUp, 0.f); 
+		cVec4 lvColumn3 = cVec4(lvLook, 0.f); 
+		cVec4 lvColumn4 = cVec4(lvStart.x, lvStart.y, lvStart.z, 1.f); 
+
+		mBillboardMatrix = cMatrix(lvColumn1, lvColumn2, lvColumn3, lvColumn4);
 	}
 
 	lRotMatrix.LoadIdentity();
@@ -207,7 +289,7 @@ void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFire
 		}
 	}
 
-	mBullets.Update();
+	//mBullets.Update();
 }
 
 void Mustang::Render(){
@@ -216,8 +298,43 @@ void Mustang::Render(){
 	for (int i = 0; i < mVehicle.m_vehicle->getNumWheels() ; i++) {
 		maTires[i].Render();
 	}
+	
+	// Si es la camara aux renderizar el muzzle lo ultimo
+	if (mbIsCamAux) {
+		// Renderiza interior
+		mMusInt->Render();
 
+		// Renderiza el arma
+		mMusWea->Render();
+
+		// Renderiza chasis
+		mMusExt->Render();
+
+		// Renderiza fogonazo del arma y laser
+		RenderRayGunMuzzle ();
+	} else {
+		// Renderiza fogonazo del arma y laser
+		RenderRayGunMuzzle ();
+
+		// Renderiza interior
+		mMusInt->Render();
+
+		// Renderiza el arma
+		mMusWea->Render();
+
+		// Renderiza chasis
+		mMusExt->Render();
+
+	}
+
+		mBullets.Render();
+}
+
+void Mustang::RenderRayGunMuzzle () {
+
+	// Si se esta disparando el arma
 	if (mbIsFiring) {
+		// Primero pinta el laser del arma
 		glEnable(GL_BLEND);
 
 		glBlendFunc(GL_DST_COLOR, GL_ONE);
@@ -227,31 +344,88 @@ void Mustang::Render(){
 
 		cVec3 lvHitPoint;
 
+		// Se renderiza el rayo del laser de la torreta
 		// Si el rayo choca con un objeto entonces se para en ese objeto, si no hasta el alcance del arma 
-		if (mbHit)
-			TransformPoint( lvHitPoint, mvRayHitPosition, mMusWea->GetWorldMatrix().Invert() );
+		if (mbLaserHit)
+			TransformPoint( lvHitPoint, mvRayLaserHitPosition, mMusWea->GetWorldMatrix().Invert() );
 		else
 			lvHitPoint = cVec3(-146.f, 41.f, WEAPON_RANGE);
 
 			cGraphicManager::Get().DrawLine(cVec3(-146.0f, 41.0f, 10.0f ), lvHitPoint, cVec3(1.f, 0.f, 0.f), 0.5f);
 			cGraphicManager::Get().DrawSphere(lvHitPoint, cVec3(1.f, 0.f, 0.f));
 
+
+		// Ahora se renderiza la bala real con el desplazamiento calculado
+		if (mbHit)
+			TransformPoint( lvHitPoint, mvRayHitPosition, mMusWea->GetWorldMatrix().Invert() );
+		else
+			lvHitPoint = mvRayHitPosition;
+
+			//cGraphicManager::Get().DrawLine(cVec3(-146.0f, 41.0f, 10.0f ), lvHitPoint, cVec3(0.f, 1.f, 0.f), 0.5f);
+			//cGraphicManager::Get().DrawSphere(lvHitPoint, cVec3(0.f, 1.f, 0.f));
+
+		cGraphicManager::Get().SetWorldMatrix(lmPosMatrix.LoadIdentity());
+
+		cGraphicManager::Get().SetWorldMatrix(mBillboardMatrix);
+
+		// Ahora pinta el fogonazo del arma
+		glColor4f (1.f, 1.f, 1.f, 1.f);
+		cTexture* lpTexture;
+
+		miFlashSeq = rand() % 5;
+
+		bool void_step = false;
+		switch (miFlashSeq) {
+			case 0:
+				   lpTexture = (cTexture*) mWeaponMuzzle1->GetResource();
+				   break;
+			case 1:
+				   lpTexture = (cTexture*) mWeaponMuzzle2->GetResource();
+				   break;
+			case 2:
+				   lpTexture = (cTexture*) mWeaponMuzzle3->GetResource();
+				   break;
+			default:
+			case 4:
+			case 5:
+				   void_step = true;
+				   break;
+		}
+
+		char buff1[256];
+		sprintf(buff1, "delay: %d, seq: %d \n", (int)void_step, miFlashSeq);
+		//OutputDebugStr(buff1);	
+
+		if (!void_step) {
+			glBindTexture(GL_TEXTURE_2D, lpTexture->GetTextureHandle());
+			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);					/* scale linearly when image bigger than texture*/
+			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);	/* scale linearly when image smalled than texture*/
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+				glBegin(GL_QUADS);
+
+					//glVertex3f(0, 0, 0);
+					glTexCoord2f(0.0f, 1.0f); glVertex3f(0, 0, 0); //glVertex3f(-156.f, 31.f, 10.f);	
+
+					//glVertex3f(5, 0, 0);
+					glTexCoord2f(1.0f, 1.0f); glVertex3f(5, 0, 0); //glVertex3f(-136.f, 31.f, 10.f);
+
+					//glVertex3f(5, 10, 0);
+					glTexCoord2f(1.0f, 0.0f); glVertex3f(5, 10, 0); //glVertex3f(-136.f, 51.f, 10.f);
+
+					//glVertex3f(0, 10, 0);
+					glTexCoord2f(0.0f, 0.0f); glVertex3f(0, 10, 0); //glVertex3f(-156.f, 51.f, 10.f);
+
+				glEnd();
+		}
+
 		cGraphicManager::Get().SetWorldMatrix(lmPosMatrix.LoadIdentity());
 
 		glDisable(GL_BLEND);
-		glColor4f(1,1,1,1.);
+		glColor4f(1,1,1,1.f);
 	}
 
-	// Renderiza interior
-	mMusInt->Render();
-
-	// Renderiza el arma
-	mMusWea->Render();
-
-	// Renderiza chasis
-	mMusExt->Render();
-
-	mBullets.Render();
 }
 
 void Mustang::Deinit(){

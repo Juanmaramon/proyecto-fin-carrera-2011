@@ -75,7 +75,8 @@ protected:
 		//Vehicle mVehicle;
 		// Skybox
 		Skybox mSkybox;
-
+		// Weapon muzzle
+		cResourceHandle mWeaponMuzzle1, mWeaponMuzzle2, mWeaponMuzzle3;
 public:
 	
 	//Función para inicializar el juego	

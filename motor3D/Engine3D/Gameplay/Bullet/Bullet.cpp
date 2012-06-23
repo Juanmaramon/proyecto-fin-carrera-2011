@@ -25,7 +25,7 @@ void Bullet::Create(cVec3 posIni, cVec3 posEnd, float angle) {
 		miId++;
 		char buff[256];
 		sprintf(buff, "id: %d, bx: %2.2f, by: %2.2f, bz: %2.2f, angle: %2.2f\n", miId, posIni.x, posIni.y, posIni.z, angle);
-		OutputDebugStr(buff);
+		//OutputDebugStr(buff);
 	}
 
 }
@@ -46,7 +46,7 @@ void Bullet::Update() {
 			if (miId == 1) {
 				char buff[256];
 				sprintf(buff, "id: %d, ini_x: %2.2f, ini_y: %2.2f, ini_z: %2.2f, angle: %2.2f, end_x: %2.2f, end_y: %2.2f, end_z: %2.2f\n", miId, lvElement.ini_position.x, lvElement.ini_position.y, lvElement.ini_position.z, lvElement.angle, lvElement.end_position.x, lvElement.end_position.y, lvElement.end_position.z);
-				OutputDebugStr(buff);
+				//OutputDebugStr(buff);
 			}
 		}
 	}
