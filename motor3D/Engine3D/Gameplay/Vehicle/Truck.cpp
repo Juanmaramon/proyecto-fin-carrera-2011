@@ -56,7 +56,106 @@ void Truck::SteeringRight(float lfTimestep){
 	mVehicle.SteeringRight(lfTimestep);
 }
 
-void Truck::Update(float lfYaw, float lfPitch){
+void Truck::Update(float lfTimestep){
+	
+	//Calcular el vector distancia (diferencia entre la posición del
+	//perseguidor y la posición del objetivo a perseguir)
+	cVec3 mTarget = cGame::Get().GetMustang().GetVehicleBullet()->GetChasisPos();
+	cVec3 lCharacterPosition = cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()).GetPosition();
+	cVec3 lDistanceVec;
+
+	lDistanceVec.x = mTarget.x - lCharacterPosition.x;
+	lDistanceVec.y = mTarget.y - lCharacterPosition.y;
+	lDistanceVec.z = mTarget.z - lCharacterPosition.z;
+
+	//Calcular la distancia que se moverá el perseguidor teniendo en
+	//cuenta su velocidad máxima
+	//float lfDisplacement = mpCharacter->GetSpeed() * lfTimestep;
+
+	float dist = lDistanceVec.Length();
+	char buff1[256];
+	sprintf(buff1, "Distancia al objetivo %2.2f\n", dist);
+	//OutputDebugStr(buff1);
+	//Si la distancia al objetivo es prácticamente cero, lo ha alcanzado.
+	//Debemos poner esta condición, ya que debido a errores de precisión,
+	//es posible que nunca se alcance una distancia 0.0f al objetivo y el
+	//perseguidor permanezca dando vueltas alrededor de él.
+	if (lDistanceVec.Length() < 0.1f)
+	{
+		OutputDebugStr("Se ha llegado al objetivo\n");
+	}
+	else
+		MoveForward(lfTimestep);
+
+	//Para mover la orientación del perseguidor es necesario calcular el
+	//ángulo que hay entre el Front del perseguidor y el vector Distance
+	//(el cual marca la dirección en la que está el objetivo). Usaremos
+	//para ello el Dot Product que nos devuelve el coseno del ángulo que
+	//buscamos.
+	float lfCosAngle = Dot( cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()).GetFront().Normalize(), lDistanceVec.Normalize() );
+	//El Dot Product (producto escalar) devuelve el coseno del ángulo
+	//entre dos vectores si éstos están normalizados. Debe devolver un
+	//valor entre [-1,1]. En ocasiones, por problemas internos de redondeo
+	//da valores algo mayores (como 1.0000001f) que pueden dar problemas.
+	//Por ello añadimos el siguiente código:
+	if ( lfCosAngle > 1.0f )
+	{
+		lfCosAngle = 1.0f;
+	}
+	else if (lfCosAngle < -1.0f )
+	{
+		lfCosAngle = -1.0f;
+	}
+	//Ahora podemos calcular cuál es ese ángulo, es decir, cuántos
+	//radianes se debe girar el perseguidor para alinearse con el punto
+	//objetivo teniendo en cuenta la orientación actual(sabemos que el
+	//valor de lfCosAngle va a estar entre [-1,1] con lo que no tendremos
+	//problemas al llamar a acosf)
+	float lfAngle = acosf(lfCosAngle);
+	sprintf(buff1, "Angulo de giro: %2.2f\n", lfAngle);
+	//OutputDebugStr(buff1);
+	//Calcular cuántos radianes se puede mover el perseguidor en este
+	//frame teniendo en cuenta su velocidad angular
+	//float lfAngleDisplacement = mpCharacter->GetAngSpeed() * lfTimestep;
+	//Si la cantidad de radianes que el personaje se puede mover este
+	//frame (acorde a su velocidad angular) es menor que la cantidad de
+	//radianes que debería girar para alinearse al objetivo, restringimos
+	//la rotación que vamos a realizar
+	/*if (lfAngle > lfAngleDisplacement )
+	{
+		lfAngle = lfAngleDisplacement;
+	}*/
+	//Ahora se sabe cuántos radianes se debe mover el perseguidor, pero
+	//¿hacia qué lado?¿A su derecha o hacia su izquierda? Para ello se
+	//debe hacer un Test del plano. Pasos:
+	//Necesitamos el vector Right del perseguidor que será la normal del
+	//plano que tenemos que usar. Este plano contiene al vector Front del
+	//personaje y nos servirá para determinar si el punto objetivo está a
+	//la izquierda o derecha del perseguidor.
+	//Hacemos el Test de plano. Si la posición del perseguidor esta
+	//contenido en el plano (=0), a la derecha del Front (<0) o a la
+	//izquierda del Front (>0)
+
+	cPlane lPlane;
+	lPlane.Init( cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()).GetRight(), cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()).GetPosition()); 
+	sprintf(buff1, "Desplazamiento: %2.2f\n", lPlane.PointTest(mTarget));
+	//OutputDebugStr(buff1);
+	if ( lPlane.PointTest(mTarget) <= 0.4f && lPlane.PointTest(mTarget) >= -0.4f )
+		mVehicle.gVehicleSteering = 0.0f;
+	else {
+		if ( lPlane.PointTest(mTarget) < 0.0f ) {
+			//OutputDebugStr("Se debe desplazar a la izquierda\n");
+			SteeringLeft(lfTimestep);
+		}
+		else {
+			//OutputDebugStr("Se debe desplazar a la derecha\n");
+			SteeringRight(lfTimestep);
+		}
+	}
+
+	//Ahora el perseguidor debe desplazarse en la dirección de su nuevo
+	//Front(ya que la orientación ha cambiado).
+
 	mVehicle.Update();
 
 	cMatrix lTransMatrix, lRotMatrix, lOffsetMatrix;
@@ -68,14 +167,14 @@ void Truck::Update(float lfYaw, float lfPitch){
 	// Acutlizacion de chasis, interior y metralleta
 	mTruckExt->SetWorldMatrix(lScaleMatrixChasis * lOffsetMatrix * cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()));
 
-	// La metralleta rota junto al chasis pero tambien siguiendoal jugador
+	// La metralleta rota junto al chasis pero tambien siguiendo al jugador
 	cMatrix lmPostTranslation;
 	lmPostTranslation.LoadIdentity();
 	
-	// Calculo de la posicion del arma (se pasa la posicion del jugador al espacio del vehiculo truck)
+	// Calculo de la posicion del arma (se pasa la posicion del protagonista al espacio del vehiculo truck)
 	cMatrix lvPosition = cPhysics::Get().Bullet2Local(cGame::Get().GetMustang().GetVehicleBullet()->m_vehicle->getChassisWorldTransform()) * cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()).Invert(); //->GetChasisPos();
 
-	// La direccion del arma será la posicion del juegador menos la posicion del arma (que al estar en la posicion 0,0,0 se desprecia)
+	// La direccion del arma será la posicion del jugador menos la posicion del arma (que al estar en la posicion 0,0,0 se desprecia)
 	cVec3 lvDirection = lvPosition.GetPosition(); //- mTruckWea->GetWorldMatrix().GetPosition();
 	float yaw = atan2f(lvDirection.x, lvDirection.z);
 

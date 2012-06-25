@@ -150,6 +150,7 @@ bool cGame::Init()
 			mWeaponMuzzle1 = cTextureManager::Get().LoadResource( "Weapon_muzzle1", "Data/Scene/images/flash_disparo/muzzle_flash_1.jpg" ); 
 			mWeaponMuzzle2 = cTextureManager::Get().LoadResource( "Weapon_muzzle2", "Data/Scene/images/flash_disparo/muzzle_flash_2.jpg" );
 			mWeaponMuzzle3 = cTextureManager::Get().LoadResource( "Weapon_muzzle3", "Data/Scene/images/flash_disparo/muzzle_flash_3.jpg" );
+			mArrowEnemy = cTextureManager::Get().LoadResource( "Arrow_enemy", "Data/Scene/images/hud/enemy_arrow.jpg" );
 //			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo2_exterior.dae" );
 //			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo2.dae" );
 //			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo2_arma.dae" );
@@ -240,7 +241,7 @@ bool cGame::Init()
 			mExt = *((cObject*) ((cScene *)mMusExt.GetResource())->getSubObject(0));
 			mInt = *((cObject*) ((cScene *)mMusInt.GetResource())->getSubObject(0));
 			mMet = *((cObject*) ((cScene *)mMusMet.GetResource())->getSubObject(0));
-			mMustang.Init(&mExt, &mInt, &mMet, &mTire, &mWeaponMuzzle1, &mWeaponMuzzle2, &mWeaponMuzzle3);
+			mMustang.Init(&mExt, &mInt, &mMet, &mTire, &mWeaponMuzzle1, &mWeaponMuzzle2, &mWeaponMuzzle3, &mArrowEnemy);
 
 			// Incializacion de enemigo 1 (Truck)
 			mTruckExterior = *((cObject*) ((cScene *)mTruckExt.GetResource())->getSubObject(0));
@@ -363,7 +364,7 @@ void cGame::Update( float lfTimestep )
 		bool lbFireMainWeapon = IsPressed( eIA_Fire );
 
 		mMustang.Update(lfYaw, lfPitch, lbAuxCamera, lbFireMainWeapon);
-		mTruck.Update();
+		mTruck.Update(lfTimestep);
 
 	// Modo Godmode	
 	} else {
@@ -385,11 +386,8 @@ void cGame::Update( float lfTimestep )
 		}
 
 		mMustang.Update(lfYaw, lfPitch);
-		mTruck.Update(lfYaw, lfPitch);
-		//mMustang.Update();
+		mTruck.Update(lfTimestep);
 	}
-
-	//mVehicle.Update();
 
 	mObject.SetPosition(CharacterPos::Get().GetCharacterPosition(), CharacterPos::Get().GetYaw());
 
@@ -524,9 +522,9 @@ void cGame::Render()
 	cPhysics::Get().Render();
 
 	// Render physic objects
-/*	for ( unsigned int luiIndex = 0; luiIndex < 10; ++luiIndex) {
+	for ( unsigned int luiIndex = 0; luiIndex < 10; ++luiIndex) {
 		maSphereObjects[luiIndex].Render();	
-	}	*/	
+	}	
 
 	mTruck.Render();
 
@@ -552,13 +550,15 @@ void cGame::Render()
 	// 4) Renderizado de Geometría 3D con transparencia
 	// -------------------------------------------------------------
 
-
 	// 5) Activación de Cámara 2D  
 	// -------------------------------------------------------------
 	cGraphicManager::Get().ActivateCamera( &m2DCamera );
 	 
 	// 6) Renderizado de Cámara 2D
 	// -------------------------------------------------------------
+	//Se dibuja la flecha que persigue los enemigos
+	GetMustang().RenderArrowEnemy();
+
 	//Se dibujan algunas cadenas de texto.
 	glEnable(GL_TEXTURE_2D);
 	mFont.SetColour( 1.0f, 0.0f, 0.0f );

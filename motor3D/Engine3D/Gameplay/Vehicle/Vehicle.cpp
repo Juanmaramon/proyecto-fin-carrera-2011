@@ -52,12 +52,14 @@ void Vehicle::initPhysics(string lsType){
 		mass = 800.f;
 		connectionHeight = 1.2f;
 	}
-	else if (lsType.compare("Truck") == 0){
+	else if (lsType.compare("Truck") == 0) {
 		m_chassisShape = new btBoxShape(btVector3(1.5f, 1.2f, 2.7f));
 		mass = 1200.f;
 		connectionHeight = .85f;
 		wheelRadius =  0.54f;	//** 0.5f;
 		wheelWidth = 0.4f;		//* 0.4f;
+		steeringClamp = 0.1f;
+		maxEngineForce = 98000.f;
 	}
 
 	// stash this shape away

@@ -14,7 +14,7 @@ class Mustang{
 
 public:
 	void Init(cObject* mustangExterior, cObject* mustangInterior, cObject* mustangWeapon, cObject* mustangTires, 
-			  cResourceHandle* weapon_muzzle1, cResourceHandle* weapon_muzzle2, cResourceHandle* weapon_muzzle3);
+			  cResourceHandle* weapon_muzzle1, cResourceHandle* weapon_muzzle2, cResourceHandle* weapon_muzzle3, cResourceHandle* arrow_enemy);
 	void Deinit();
 	void MoveForward(float lfTimestep);
 	void Break(float lfTimestep);
@@ -23,6 +23,7 @@ public:
 	void Update(float lfYaw = 0.0f, float lfPitch = 0.0f, bool lbIsCameraAux = false, bool lbFireMainWeapon = false);
 	Vehicle* GetVehicleBullet() { return &mVehicle; }
 	void Render();
+	void RenderArrowEnemy ();
 
 private: 
 	void RenderRayGunMuzzle ();
@@ -47,8 +48,10 @@ private:
 	cResourceHandle* mWeaponMuzzle1;
 	cResourceHandle* mWeaponMuzzle2;
 	cResourceHandle* mWeaponMuzzle3;
+	cResourceHandle* mArrowEnemy;
 	int miFlashSeq;
 	cMatrix mBillboardMatrix;
+	float mfEnemyArrow;
 };
 
 #endif

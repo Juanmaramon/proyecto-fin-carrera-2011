@@ -76,7 +76,7 @@ protected:
 		// Skybox
 		Skybox mSkybox;
 		// Weapon muzzle
-		cResourceHandle mWeaponMuzzle1, mWeaponMuzzle2, mWeaponMuzzle3;
+		cResourceHandle mWeaponMuzzle1, mWeaponMuzzle2, mWeaponMuzzle3, mArrowEnemy;
 public:
 	
 	//Función para inicializar el juego	
@@ -120,6 +120,7 @@ public:
 
 	Mustang GetMustang() { return mMustang; }
 	Truck GetTruck() { return mTruck; }
+
 };
 
 #endif
