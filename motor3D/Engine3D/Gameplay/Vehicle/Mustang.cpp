@@ -234,12 +234,16 @@ void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFire
 
 		// Se construye la matriz de rotacion para el billboard del fogonazo del arma
 		// Primero se crea el vector que une la camara con el billboard
-		cVec3 lvLook = cGame::Get().Get3DCamera().GetPosition() - lvStart;
+		cVec3 lvCameraPos, lvCameraUp; 
+		TransformPoint( lvCameraPos, cGame::Get().Get3DCamera().GetPosition(), mMusWea->GetWorldMatrix() );
+		TransformPoint( lvCameraUp, cGame::Get().Get3DCamera().GetUp().Normalize(), mMusWea->GetWorldMatrix() );
+
+		cVec3 lvLook = lvCameraPos - lvStart ;
 		// Se normaliza
 		lvLook.Normalize();
 		// Ahora calculo el vector derecha del billboard (producto vectorial entre el vector look y el vector up (de la camara))
 		cVec3 lvRight, lvUp;
-		Cross(lvRight, cGame::Get().Get3DCamera().GetUp().Normalize(), lvLook);
+		Cross(lvRight, lvCameraUp, lvLook);
 		// Calculo el vector up del propio billboard
 		Cross(lvUp, lvLook, lvRight);
 		// Se compone la matriz de rotacion del billboard
@@ -248,23 +252,30 @@ void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFire
 		cVec4 lvColumn3 = cVec4(lvLook, 0.f); 
 		cVec4 lvColumn4 = cVec4(lvStart.x, lvStart.y, lvStart.z, 1.f); 
 
-		mBillboardMatrix = cMatrix(lvColumn1, lvColumn2, lvColumn3, lvColumn4);
+		cMatrix lmBillboardMatrix = cMatrix(lvColumn1, lvColumn2, lvColumn3, lvColumn4);
+
+		float lfAngle = atan2f(lvLook.Normalize().x, lvLook.Normalize().z);
+
+		cMatrix lmRot;
+		lmRot.LoadRotation(cVec3(0.f, 1.f, 0.f), -lfAngle);
+
+		mBillboardMatrix =  lScaleMatrixChasis * lOffsetMatrix * /*lRotMatrix **/ lmPostTranslation *  cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform());
 	}
 
 	// Ahora se calcula la orientacion de la flecha de aviso de enemigos
-	//Calcular el vector distancia (diferencia entre la posición del
-	//perseguidor y la posición del objetivo a perseguir)
-	cVec3 mTarget = cGame::Get().GetTruck().GetVehicleBullet()->GetChasisPos();
-	cVec3 lCharacterPosition = cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()).GetPosition();
+	// Calcular el vector distancia (diferencia entre la posición del
+	// perseguidor y la posición del objetivo a perseguir)
+	// Se pasa a coordenadas del jugador
+	cMatrix mTarget = cPhysics::Get().Bullet2Local(cGame::Get().GetTruck().GetVehicleBullet()->m_vehicle->getChassisWorldTransform()) * cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()).Invert();
+
 	cVec3 lDistanceVec;
+	// Dependiendo de la pos de la camara el vector direccion se orientara de una forma u otra
+	if (lbIsCameraAux)
+		lDistanceVec = mTarget.GetPosition().Normalize();
+	else
+		lDistanceVec = -mTarget.GetPosition().Normalize();
 
-	lDistanceVec.x = mTarget.x - lCharacterPosition.x;
-	lDistanceVec.y = mTarget.y - lCharacterPosition.y;
-	lDistanceVec.z = mTarget.z - lCharacterPosition.z;
-
-	float mfEnemyArrow = atan2f(lDistanceVec.x, lDistanceVec.z);
-	sprintf(buff1, "Angle: %2.2f\n", mfEnemyArrow);
-	OutputDebugStr(buff1);
+	mfEnemyArrow = atan2f(lDistanceVec.x, lDistanceVec.z);
 
 	lRotMatrix.LoadIdentity();
 
@@ -381,12 +392,12 @@ void Mustang::RenderRayGunMuzzle () {
 		sprintf(buff1, "Punto de impacto: (%2.2f , %2.2f , %2.2f) \n", lvHitPoint.x, lvHitPoint.y, lvHitPoint.z);
 		OutputDebugStr(buff1);
 
-			cGraphicManager::Get().DrawLine(cVec3(-146.0f, 41.0f, 10.0f ), lvHitPoint, cVec3(1.f, 0.f, 0.f), 0.5f);
-			cGraphicManager::Get().DrawSphere(lvHitPoint, cVec3(1.f, 0.f, 0.f));
+			cGraphicManager::Get().DrawLine(cVec3(-146.0f, 41.0f, 10.0f ), lvHitPoint, cVec3(0.f, 1.f, 0.f), 0.5f);
+			cGraphicManager::Get().DrawSphere(lvHitPoint, cVec3(0.f, 1.f, 0.f));
 
-		//cGraphicManager::Get().SetWorldMatrix(lmPosMatrix.LoadIdentity());
+		cGraphicManager::Get().SetWorldMatrix(lmPosMatrix.LoadIdentity());
 
-		//cGraphicManager::Get().SetWorldMatrix(mBillboardMatrix);
+		cGraphicManager::Get().SetWorldMatrix(mBillboardMatrix);
 
 		// Ahora pinta el fogonazo del arma
 		glColor4f (1.f, 1.f, 1.f, 1.f);
@@ -477,13 +488,14 @@ void Mustang::Deinit(){
 
 void Mustang::RenderArrowEnemy () {
 
-	cMatrix lmRotate;
-	lmRotate.LoadRotation(cVec3(0.f, 0.f, 0.f), -mfEnemyArrow);
+	cMatrix lmRotate, lmTranslation;
+	lmRotate.LoadRotation(cVec3(0.f, 0.f, 1.f), mfEnemyArrow);
+	lmTranslation.LoadTranslation(cVec3(0.f, -330.f, 0.f));
 	
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_DST_COLOR, GL_ONE);
 
-	cGraphicManager::Get().SetWorldMatrix(lmRotate);
+	cGraphicManager::Get().SetWorldMatrix(lmTranslation * lmRotate);
 	
 	cTexture* lpTexture = (cTexture*) mArrowEnemy->GetResource();
 	glBindTexture(GL_TEXTURE_2D, lpTexture->GetTextureHandle());
@@ -495,13 +507,10 @@ void Mustang::RenderArrowEnemy () {
 	glBegin(GL_QUADS);
 
 		
-		glTexCoord2f(0.0f, 1.0f); glVertex3f(0, 0, 0);	
-
-		glTexCoord2f(1.0f, 1.0f); glVertex3f(50, 0, 0);
-
-		glTexCoord2f(1.0f, 0.0f); glVertex3f(50, 50, 0);
-
-		glTexCoord2f(0.0f, 0.0f); glVertex3f(0, 50, 0);
+		 glTexCoord2f(0.0f, 0.0f); glVertex3f(-25, -25, 0);	
+		 glTexCoord2f(1.0f, 0.0f); glVertex3f(25, -25, 0);
+		 glTexCoord2f(1.0f, 1.0f); glVertex3f(25, 25, 0);
+		 glTexCoord2f(0.0f, 1.0f); glVertex3f(-25, 25, 0); 
 
 	glEnd();
 
