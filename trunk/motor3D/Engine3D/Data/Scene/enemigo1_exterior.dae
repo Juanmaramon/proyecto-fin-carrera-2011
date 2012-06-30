@@ -24,12 +24,12 @@
     </image>
   </library_images>
   <library_materials>
-    <material id="blinn3_exteriot_mat" name="blinn3_exteriot_mat">
-      <instance_effect url="#blinn3_exteriot_mat-fx"/>
+    <material id="light_exteriot_mat" name="light_exteriot_mat">
+      <instance_effect url="#light_exteriot_mat-fx"/>
     </material>
   </library_materials>
   <library_effects>
-    <effect id="blinn3_exteriot_mat-fx" name="blinn3_exteriot_mat">
+    <effect id="light_exteriot_mat-fx" name="light_exteriot_mat">
       <profile_COMMON>
         <technique sid="standard">
           <phong>

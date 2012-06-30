@@ -9,10 +9,10 @@ float4x4 world;
 float4x4 worldInverseTranspose;
 
 // Direccion de la luz
-float3 LightDirection : Direction = float3(0,50,10);
+float3 LightDirection : Direction = float3(0,1,1);
 
 // Color de la luz de ambiente
-float4 AmbientColor : Ambient = float4(.1,.1,.1,1);
+float4 AmbientColor : Ambient = float4(.0,.0,.0,1);
 
 // Intensidad de la luz
 float AmbientIntensity = 1;

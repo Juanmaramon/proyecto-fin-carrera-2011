@@ -24,12 +24,12 @@
     </image>
   </library_images>
   <library_materials>
-    <material id="blinn3_rueda_mat" name="blinn3_rueda_mat">
-      <instance_effect url="#blinn3_rueda_mat-fx"/>
+    <material id="light_rueda_mat" name="light_rueda_mat">
+      <instance_effect url="#light_rueda_mat-fx"/>
     </material>
   </library_materials>
   <library_effects>
-    <effect id="blinn3_rueda_mat-fx" name="blinn3_rueda_mat">
+    <effect id="light_rueda_mat-fx" name="light_rueda_mat">
       <profile_COMMON>
         <technique sid="standard">
           <phong>
@@ -4265,7 +4265,7 @@
         <vertices id="enemigo1_rueda-VERTEX">
           <input semantic="POSITION" source="#enemigo1_rueda-POSITION"/>
         </vertices>
-        <triangles count="1008" material="blinn3_rueda_mat">
+        <triangles count="1008" material="light_rueda_mat">
           <input semantic="VERTEX" offset="0" source="#enemigo1_rueda-VERTEX"/>
           <input semantic="NORMAL" offset="1" source="#enemigo1_rueda-Normal0"/>
           <input semantic="TEXCOORD" offset="2" set="0" source="#enemigo1_rueda-UV0"/>
@@ -4281,7 +4281,7 @@
         <instance_geometry url="#enemigo1_rueda-lib">
           <bind_material>
             <technique_common>
-              <instance_material symbol="blinn3_rueda_mat" target="#blinn3_rueda_mat"/>
+              <instance_material symbol="light_rueda_mat" target="#light_rueda_mat"/>
             </technique_common>
           </bind_material>
         </instance_geometry>
