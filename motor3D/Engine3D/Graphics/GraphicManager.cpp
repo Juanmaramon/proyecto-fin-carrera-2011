@@ -146,11 +146,11 @@ void cGraphicManager::DrawPoint( const cVec3 &lvPosition, const cVec3 &lvColor )
 //El primer parámetro es la posición donde 
 // se renderizará el punto y el segundo parámetro será el color representado por RGB 
 // entre 0.0 y 1.0.
-void cGraphicManager::DrawSphere( const cVec3 &lvPosition, const cVec3 &lvColor )
+void cGraphicManager::DrawSphere( const cVec3 &lvPosition, const cVec3 &lvColor, float alpha)
 {
    //Antes de pintar las primitivas se desactivan el uso de texturas y después se vuelve a activar, 
    //esto se hace para asegurarnos de que el uso de texturas no impide el renderizado de estas primitivas. 	
-   glDisable(GL_TEXTURE_2D);
+   //glDisable(GL_TEXTURE_2D);
  
 
    GLUquadricObj *quadratic;
@@ -161,15 +161,13 @@ void cGraphicManager::DrawSphere( const cVec3 &lvPosition, const cVec3 &lvColor 
 
    glTranslatef(lvPosition.x, lvPosition.y, lvPosition.z);
 
-   glColor3f (lvColor.x, lvColor.y, lvColor.z);
-  // glBegin(GL_POINTS);
+   glColor4f (lvColor.x, lvColor.y, lvColor.z, alpha);
 
    gluSphere(quadratic, 1.3f, 24, 24);
 
    glPopMatrix();
 
-   //glEnd ();
-   glEnable(GL_TEXTURE_2D);
+   //glEnable(GL_TEXTURE_2D);
 
 
 }
@@ -181,7 +179,7 @@ void cGraphicManager::DrawLine( const cVec3 &lvPosition1,
 {
    //Antes de pintar las primitivas se desactivan el uso de texturas y después se vuelve a activar, 
    //esto se hace para asegurarnos de que el uso de texturas no impide el renderizado de estas primitivas. 	
-   glDisable(GL_TEXTURE_2D);
+   //glDisable(GL_TEXTURE_2D);
  
    // LINE
    glLineWidth (1);
@@ -194,7 +192,7 @@ void cGraphicManager::DrawLine( const cVec3 &lvPosition1,
    };
    glEnd ();
  
-   glEnable(GL_TEXTURE_2D);
+  //glEnable(GL_TEXTURE_2D);
 }
 
 //Función para renderizar una malla o una rejilla.

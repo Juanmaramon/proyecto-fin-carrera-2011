@@ -84,8 +84,8 @@ void Truck::Update(float lfTimestep){
 	{
 		OutputDebugStr("Se ha llegado al objetivo\n");
 	}
-	else
-		MoveForward(lfTimestep);
+	//else
+	//	MoveForward(lfTimestep);
 
 	//Para mover la orientación del perseguidor es necesario calcular el
 	//ángulo que hay entre el Front del perseguidor y el vector Distance

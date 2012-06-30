@@ -557,7 +557,9 @@ void cGame::Render()
 	// 6) Renderizado de Cámara 2D
 	// -------------------------------------------------------------
 	//Se dibuja la flecha que persigue los enemigos
-	GetMustang().RenderArrowEnemy();
+	mMustang.RenderArrowEnemy();
+	// Se dibuja el fogonazo del arma
+	mMustang.RenderMuzzle();
 
 	//Se dibujan algunas cadenas de texto.
 	glEnable(GL_TEXTURE_2D);

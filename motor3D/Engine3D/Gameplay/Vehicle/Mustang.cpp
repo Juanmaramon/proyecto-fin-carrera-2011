@@ -339,10 +339,10 @@ void Mustang::Render(){
 		mMusExt->Render();
 
 		// Renderiza fogonazo del arma y laser
-		RenderRayGunMuzzle ();
+		RenderRayGun ();
 	} else {
 		// Renderiza fogonazo del arma y laser
-		RenderRayGunMuzzle ();
+		RenderRayGun ();
 
 		// Renderiza interior
 		mMusInt->Render();
@@ -358,14 +358,22 @@ void Mustang::Render(){
 		mBullets.Render();
 }
 
-void Mustang::RenderRayGunMuzzle () {
+void Mustang::RenderRayGun () {
 
 	// Si se esta disparando el arma
 	if (mbIsFiring) {
 		// Primero pinta el laser del arma
 		glEnable(GL_BLEND);
 
-		glBlendFunc(GL_DST_COLOR, GL_ONE);
+		//glBlendFunc(GL_DST_COLOR, GL_ONE);
+		//glBlendFunc(GL_DST_COLOR, GL_ZERO);
+		
+		//glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+		glBlendFunc(GL_ONE, GL_ONE);
+
+		// Enable antialiasing
+		glEnable(GL_LINE_SMOOTH);
+		glHint(GL_LINE_SMOOTH_HINT, GL_DONT_CARE);
 
 		cMatrix lmPosMatrix;
 		cGraphicManager::Get().SetWorldMatrix(mMusWea->GetWorldMatrix());
@@ -392,82 +400,14 @@ void Mustang::RenderRayGunMuzzle () {
 		sprintf(buff1, "Punto de impacto: (%2.2f , %2.2f , %2.2f) \n", lvHitPoint.x, lvHitPoint.y, lvHitPoint.z);
 		OutputDebugStr(buff1);
 
-			cGraphicManager::Get().DrawLine(cVec3(-146.0f, 41.0f, 10.0f ), lvHitPoint, cVec3(0.f, 1.f, 0.f), 0.5f);
-			cGraphicManager::Get().DrawSphere(lvHitPoint, cVec3(0.f, 1.f, 0.f));
-
-		cGraphicManager::Get().SetWorldMatrix(lmPosMatrix.LoadIdentity());
-
-		cGraphicManager::Get().SetWorldMatrix(mBillboardMatrix);
-
-		// Ahora pinta el fogonazo del arma
-		glColor4f (1.f, 1.f, 1.f, 1.f);
-		cTexture* lpTexture;
-
-		miFlashSeq = rand() % 5;
-
-		bool void_step = false;
-		switch (miFlashSeq) {
-			case 0:
-				   lpTexture = (cTexture*) mWeaponMuzzle1->GetResource();
-				   break;
-			case 1:
-				   lpTexture = (cTexture*) mWeaponMuzzle2->GetResource();
-				   break;
-			case 2:
-				   lpTexture = (cTexture*) mWeaponMuzzle3->GetResource();
-				   break;
-			default:
-			case 4:
-			case 5:
-				   void_step = true;
-				   break;
-		}
-
-
-		sprintf(buff1, "delay: %d, seq: %d \n", (int)void_step, miFlashSeq);
-		//OutputDebugStr(buff1);	
-
-		if (!void_step) {
-			glBindTexture(GL_TEXTURE_2D, lpTexture->GetTextureHandle());
-			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);					/* scale linearly when image bigger than texture*/
-			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);	/* scale linearly when image smalled than texture*/
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-				glBegin(GL_QUADS);
-
-					//glVertex3f(0, 0, 0);
-					glTexCoord2f(0.0f, 1.0f); glVertex3f(-156.f, 31.f, 10.f);	
-
-					//glVertex3f(5, 0, 0);
-					glTexCoord2f(1.0f, 1.0f); glVertex3f(-136.f, 31.f, 10.f);
-
-					//glVertex3f(5, 10, 0);
-					glTexCoord2f(1.0f, 0.0f); glVertex3f(-136.f, 51.f, 10.f);
-
-					//glVertex3f(0, 10, 0);
-					glTexCoord2f(0.0f, 0.0f); glVertex3f(-156.f, 51.f, 10.f);
-
-
-					//glVertex3f(0, 0, 0);
-				/*	glTexCoord2f(0.0f, 1.0f); glVertex3f(0, -5, 0); //glVertex3f(-156.f, 31.f, 10.f);	
-
-					//glVertex3f(5, 0, 0);
-					glTexCoord2f(1.0f, 1.0f); glVertex3f(5, -5, 0); //glVertex3f(-136.f, 31.f, 10.f);
-
-					//glVertex3f(5, 10, 0);
-					glTexCoord2f(1.0f, 0.0f); glVertex3f(5, 5, 0); //glVertex3f(-136.f, 51.f, 10.f);
-
-					//glVertex3f(0, 10, 0);
-					glTexCoord2f(0.0f, 0.0f); glVertex3f(0, 5, 0); //glVertex3f(-156.f, 51.f, 10.f);*/
-
-
-				glEnd();
-		}
+			cGraphicManager::Get().DrawLine(cVec3(-146.0f, 41.0f, 10.0f ), lvHitPoint, cVec3(1.f, 0.f, 0.f), 0.5f);
+			cGraphicManager::Get().DrawSphere(lvHitPoint, cVec3(1.f, 0.f, 0.f), 0.5f);
 
 		cGraphicManager::Get().SetWorldMatrix(lmPosMatrix.LoadIdentity());
 
 		glDisable(GL_BLEND);
+		glDisable(GL_LINE_SMOOTH);
+		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 		glColor4f(1,1,1,1.f);
 	}
 
@@ -517,5 +457,83 @@ void Mustang::RenderArrowEnemy () {
 	cGraphicManager::Get().SetWorldMatrix(lmRotate.LoadIdentity());
 	glDisable(GL_BLEND);
 	glColor4f(1,1,1,1.f);
+
+}
+
+void Mustang::RenderMuzzle() {
+
+	if (mbIsFiring) {
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_ONE, GL_ONE);
+
+		cVec3 lvMuzzlePos;
+		TransformPoint( lvMuzzlePos, cVec3(-146.0f, 41.0f, 10.0f ), mMusWea->GetWorldMatrix()   *  cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()));
+		cMatrix lmBillboardMatrix;
+		//lmBillboardMatrix.LoadTranslation(cVec3(-0.0f, 91.0f, -10.0f ));
+		lmBillboardMatrix.LoadTranslation(lvMuzzlePos);
+		cGraphicManager::Get().SetWorldMatrix(lmBillboardMatrix);
+
+		// Ahora pinta el fogonazo del arma
+		glColor4f (1.f, 1.f, 1.f, 1.f);
+		cTexture* lpTexture;
+
+		miFlashSeq = rand() % 5;
+
+		bool void_step = false;
+		switch (miFlashSeq) {
+			case 0:
+				   lpTexture = (cTexture*) mWeaponMuzzle1->GetResource();
+				   break;
+			case 1:
+				   lpTexture = (cTexture*) mWeaponMuzzle2->GetResource();
+				   break;
+			case 2:
+				   lpTexture = (cTexture*) mWeaponMuzzle3->GetResource();
+				   break;
+			default:
+			case 4:
+			case 5:
+				   void_step = true;
+				   break;
+		}
+
+		if (!void_step) {
+			glBindTexture(GL_TEXTURE_2D, lpTexture->GetTextureHandle());
+			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);					/* scale linearly when image bigger than texture*/
+			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);	/* scale linearly when image smalled than texture*/
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+				glBegin(GL_QUADS);
+
+				 glTexCoord2f(0.0f, 0.0f); glVertex3f(-25, -25, 0);	
+				 glTexCoord2f(1.0f, 0.0f); glVertex3f(25, -25, 0);
+				 glTexCoord2f(1.0f, 1.0f); glVertex3f(25, 25, 0);
+				 glTexCoord2f(0.0f, 1.0f); glVertex3f(-25, 25, 0); 
+
+
+					//glVertex3f(0, 0, 0);
+				/*	glTexCoord2f(0.0f, 1.0f); glVertex3f(0, -5, 0); //glVertex3f(-156.f, 31.f, 10.f);	
+
+					//glVertex3f(5, 0, 0);
+					glTexCoord2f(1.0f, 1.0f); glVertex3f(5, -5, 0); //glVertex3f(-136.f, 31.f, 10.f);
+
+					//glVertex3f(5, 10, 0);
+					glTexCoord2f(1.0f, 0.0f); glVertex3f(5, 5, 0); //glVertex3f(-136.f, 51.f, 10.f);
+
+					//glVertex3f(0, 10, 0);
+					glTexCoord2f(0.0f, 0.0f); glVertex3f(0, 5, 0); //glVertex3f(-156.f, 51.f, 10.f);*/
+
+
+				glEnd();
+		}
+
+		cGraphicManager::Get().SetWorldMatrix(lmBillboardMatrix.LoadIdentity());
+
+		glDisable(GL_BLEND);
+		glColor4f(1,1,1,1.f);
+
+	}
 
 }

@@ -24,9 +24,9 @@ public:
 	Vehicle* GetVehicleBullet() { return &mVehicle; }
 	void Render();
 	void RenderArrowEnemy ();
-
+	void RenderMuzzle();
 private: 
-	void RenderRayGunMuzzle ();
+	void RenderRayGun ();
 
 	// Modelo físico del vehiculo 
 	Vehicle mVehicle;

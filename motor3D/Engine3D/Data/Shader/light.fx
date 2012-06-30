@@ -9,12 +9,13 @@ float4x4 world;
 float4x4 worldInverseTranspose;
 
 // Direccion de la luz
-float3 LightDirection : Direction = float3(0,50,10);
+//float3 LightDirection : Direction = float3(0,50,10);
+float3 LightDirection : Direction = float3(0,1,1);
 //float3 LightDirection : Direction = float3(-1,5,0);
 
 
 // Color de la luz de ambiente
-float4 AmbientColor : Ambient = float4(.1,.1,.1,1);
+float4 AmbientColor : Ambient = float4(.0,.0,.0,1);
 
 // Posicion camara
 float3 cameraPos;
@@ -80,6 +81,7 @@ struct PS_OUTPUT
 VS_OUTPUT myvs( const VS_INPUT IN )
 {
 	VS_OUTPUT OUT;
+
 	float4 position = float4(IN.position, 1.0);
 	OUT.position = mul( worldViewProj, position );
 
@@ -88,18 +90,16 @@ VS_OUTPUT myvs( const VS_INPUT IN )
     	worldToTangentSpace[1] = mul((float3x3)world, cross(IN.Tangent, IN.Normal));
     	worldToTangentSpace[2] = mul((float3x3)world, IN.Normal);
 
+	// Diffuse lightning and specular
+	OUT.Light = normalize(mul(worldToTangentSpace, LightDirection));
+
 	OUT.tex0 = IN.tex0;
 
 	OUT.CamView = normalize(cameraPos - mul( world, position ));
 	OUT.posS = position;
 
-	// Diffuse lightning and specular
-	//OUT.Light = normalize(mul(worldToTangentSpace, LightDirection));
-	OUT.Light = normalize(LightDirection);
-
 	// Bump
-	//OUT.Normal = normalize(mul((float3x3)world, IN.Normal));
-	OUT.Normal = normalize(mul((float3x3)worldInverseTranspose, IN.Normal));
+	OUT.Normal = normalize(mul((float3x3)world, IN.Normal));
 
 	return OUT;
 }
@@ -113,10 +113,9 @@ PS_OUTPUT myps( VS_OUTPUT IN )
 	PS_OUTPUT output;
 	
 	// Bump
-	//float3 Normal = (2 * (tex2D(Normals_0, IN.tex0))) - 0.5;
+	float3 Normal = (2 * (tex2D(Normals_0, IN.tex0))) - 1.0;
 	
-	float Diffuse = saturate(dot(IN.Light, IN.Normal));
-	//float Diffuse = saturate(dot(IN.Light, Normal));
+	float Diffuse = saturate(dot(IN.Light, Normal));
 	float4 Ambient = AmbientIntensity * AmbientColor;
 	float4 texCol = tex2D(Diffuse_0, IN.tex0);
 
@@ -124,7 +123,7 @@ PS_OUTPUT myps( VS_OUTPUT IN )
 	
 	float3 Half = normalize(normalize(LightDirection) + normalize(IN.CamView));
 	float specular = pow(saturate(dot(IN.Normal, Half)), 8);
-	float4 specCol = 4 * tex2D(Specular_0, IN.tex0) * (specular * Diffuse);
+	float4 specCol = 2 * tex2D(Specular_0, IN.tex0) * (specular * Diffuse);
 
 	output.Color = Ambient + texCol + specCol;
 
