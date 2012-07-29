@@ -51,6 +51,24 @@ void cPhysics::Init( ){
 	btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0,1,0),1);
 	mapCollisionShapes.push_back(groundShape);
 	GetNewBody( groundShape, 0.0f, cVec3( 0.0f, -5.0f, 0.0f ));	
+	
+	btCollisionShape* wallShapeLaterals = new btBoxShape(btVector3(btScalar(1.),btScalar(50.),btScalar(1300.)));
+	mapCollisionShapes.push_back(wallShapeLaterals);
+	// MAP_SIZE / 2 - 5 = 2390 / 2 - 22 = 1173
+	// Left wall
+	GetNewBody( wallShapeLaterals, 0.0f, cVec3(1173.f, 0.0f, 0.0f ));
+	// Right wall
+	GetNewBody( wallShapeLaterals, 0.0f, cVec3(-1173.f, 0.0f, 0.0f ));
+	
+	btCollisionShape* wallShapeForwards = new btBoxShape(btVector3(btScalar(1300.),btScalar(50.),btScalar(1.)));
+	mapCollisionShapes.push_back(wallShapeForwards);
+
+	// MAP_SIZE / 2 - 5 = 2390 / 2 - 22 = 1173
+	// Forwards wall
+	GetNewBody( wallShapeForwards, 0.0f, cVec3(0.f, 0.0f, 1173.f ));
+	// Backwords wall
+	GetNewBody( wallShapeForwards, 0.0f, cVec3(0.f, 0.0f, -1173.f ));	
+
 
 	// Draws debug info of bullet
 	//cPhysicsDebugDraw::Get( ).setDebugMode( cPhysicsDebugDraw::DBG_DrawWireframe );

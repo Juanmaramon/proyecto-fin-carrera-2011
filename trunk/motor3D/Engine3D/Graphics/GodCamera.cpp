@@ -4,7 +4,8 @@
 #include "GraphicManager.h"
 
 #define MOUSE_SPEED 1.5f 
-#define GOD_STEP 20.f 
+//#define GOD_STEP 20.f 
+#define GOD_STEP 200.f
 
 void GodCamera::Init(){
 	mNew_pos  = cVec3(0.0f, 0.0f, 0.0f);

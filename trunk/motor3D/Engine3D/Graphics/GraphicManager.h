@@ -59,6 +59,12 @@ class cGraphicManager : public cSingleton<cGraphicManager>
 
 	  friend class cSingleton<cGraphicManager>;
 
+	  // Crea un falso billboard
+	  void cGraphicManager::BillboardCheatSphericalBegin();
+
+	  // Deshace el billboad anteriormente creado
+	  void BillboardEnd();
+
    protected:
       cGraphicManager() { ; } // Protected constructor.
 

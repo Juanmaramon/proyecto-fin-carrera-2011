@@ -648,6 +648,10 @@
 		<Filter
 			Name="Gameplay"
 			>
+			<File
+				RelativePath=".\Gameplay\StateConstants.h"
+				>
+			</File>
 			<Filter
 				Name="Scene"
 				>
@@ -692,11 +696,27 @@
 				Name="Terrain"
 				>
 				<File
+					RelativePath=".\Gameplay\Terrain\Bush.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Gameplay\Terrain\Bush.h"
+					>
+				</File>
+				<File
 					RelativePath=".\Gameplay\Terrain\Heightmap.cpp"
 					>
 				</File>
 				<File
 					RelativePath=".\Gameplay\Terrain\Heightmap.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Gameplay\Terrain\Ruin.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Gameplay\Terrain\Ruin.h"
 					>
 				</File>
 			</Filter>
@@ -749,6 +769,18 @@
 				</File>
 				<File
 					RelativePath=".\Gameplay\Bullet\Bullet.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Explosion"
+				>
+				<File
+					RelativePath=".\Gameplay\Explosion\Explosion.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Gameplay\Explosion\Explosion.h"
 					>
 				</File>
 			</Filter>

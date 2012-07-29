@@ -9,7 +9,11 @@
 #include "../../Graphics/Textures/Texture.h"
 
 void Mustang::Init(cObject* mustangExterior, cObject* mustangInterior, cObject* mustangWeapon, cObject* mustangTires, 
-				   cResourceHandle* weapon_muzzle1, cResourceHandle* weapon_muzzle2, cResourceHandle* weapon_muzzle3, cResourceHandle* arrow_enemy) {
+				   cResourceHandle* weapon_muzzle1, cResourceHandle* weapon_muzzle2, cResourceHandle* weapon_muzzle3, 
+				   cResourceHandle* arrow_enemy, cResourceHandle* mPositiveAmmunition, cObject* mustangExteriorDestroyed,
+				   cObject* mustangInteriorDestroyed, cResourceHandle* explosion_sprite,
+				 cResourceHandle* explosion_sprite1, cResourceHandle* particle_texture,
+				 cResourceHandle* crosshair) {
 
 	// Inicializacion de físicas del vehiculo
 	mVehicle.initPhysics("Mustang");
@@ -37,11 +41,30 @@ void Mustang::Init(cObject* mustangExterior, cObject* mustangInterior, cObject* 
 	mWeaponMuzzle3 = weapon_muzzle3;
 	// Textura de flecha que persigue enemigo
 	mArrowEnemy  = arrow_enemy;
+	// Texturas de HUD
+ 	mPosAmmu = mPositiveAmmunition;
 	// Secuencia de animacion fogonazo arma
 	miFlashSeq = 0;
-	// Matriz de rotacion para el billboard del fogonazo
-	mBillboardMatrix.LoadIdentity();
+	// Direccion de la flecha que indica el enemigo
 	mfEnemyArrow = 0.0f;
+
+	// Callback pointer to get this object from bullet collisionShape
+	mVehicle.m_carChassis->setUserPointer(this);
+
+	// Contador de vidas
+	miCurrentLives = 300;
+
+	// Modelo destruido
+	mMusExtDes = mustangExteriorDestroyed;
+	mMusIntDes = mustangInteriorDestroyed;
+
+	// Explosion
+	mExplosion.Init(explosion_sprite, explosion_sprite1, weapon_muzzle1, particle_texture);
+
+	mState = eREADY;
+
+	mCrosshair = crosshair;
+	mCHRotationCount = 0.0f;
 }
 
 void Mustang::MoveForward(float lfTimestep){
@@ -64,11 +87,44 @@ void Mustang::SteeringRight(float lfTimestep){
 	mVehicle.SteeringRight(lfTimestep);
 }
 
-void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFireMainWeapon){
+void Mustang::Update(float lfTimestep, float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFireMainWeapon){
+	char buff1[256];
+	sprintf(buff1, " Current lives: %d \n", miCurrentLives);
+	//OutputDebugStr(buff1);
+
 	mbIsFiring = false;
 	mbIsCamAux = lbIsCameraAux;
+	mYaw = lfYaw;
+	mPitch = lfPitch;
+	mCHRotationCount += 0.001f;
 
 	mVehicle.Update();
+
+	// Si no esta con vida, no se actualiza
+	if (!IsAlive()) {
+
+		// Activa animacion de explosion (solo recien destruido)
+		if (mState == eDESTROYED)
+			mExplosion.SetAlive(true);
+	
+		if (mState == eDESTROYED)
+			mState = eDEATH;
+
+		Break(lfTimestep);
+		
+		mMusExtDes->SetWorldMatrix(mMusExt->GetWorldMatrix());
+		mMusIntDes->SetWorldMatrix(mMusInt->GetWorldMatrix());
+
+		if (mState == eDEATH) {
+			cMatrix lmPosFix;
+			lmPosFix.LoadTranslation(cVec3(3.7f, 0.0f, 0.f));
+			mExplosion.SetPosition(mMusExtDes->GetWorldMatrix() * lmPosFix);
+			// Correccion sobre la posicion del sist. particulas
+			lmPosFix.LoadTranslation(cVec3(4.5f, -1.15f, -0.9f));
+			mExplosion.SetParticlesPosition(mMusExtDes->GetWorldMatrix() * lmPosFix);
+		}
+
+	}
 
 	cMatrix lTransMatrix, lRotMatrix, lOffsetMatrix;
 	lTransMatrix.LoadIdentity();
@@ -100,8 +156,6 @@ void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFire
 	gluUnProject(lfYaw, winY, 0,
 			    lmView, lmProj, laiViewport,
 				&resX, &resY, &resZ);
-
-	char buff1[256];
 	
 	// -- Calculo de la posicion del arma
 
@@ -111,7 +165,13 @@ void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFire
 	cMatrix lmMustangPosition = cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()) * cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()).Invert();
 
 	cVec3 lvDirection = lvPosition - lmMustangPosition.GetPosition();
-	float yaw = atan2f(lvDirection.x, lvDirection.z);
+	
+	float yaw;
+	// Si esta destruido no actualiza posicion arma
+	if (IsAlive())
+		yaw = atan2f(lvDirection.x, lvDirection.z);
+	else
+		yaw = mfPreviousYaw;
 
 	// Inercia
 	float lfyaw = yaw * 0.1f + mfPreviousYaw * (1  - 0.1f);
@@ -133,13 +193,12 @@ void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFire
 	if (lbFireMainWeapon) {
 		mbIsFiring = true;
 		mbLaserHit = false;
-		OutputDebugStr("Fire!!\n");
 		
 		// Start and End are vectors
 		cVec3 lvEnd;
 		cVec3 lvStart;
 
-		/*TransformPoint( lvStart, cVec3(-146.0f, 41.0f, 10.0f ), mMusWea->GetWorldMatrix() );
+		TransformPoint( lvStart, cVec3(-146.0f, 41.0f, 10.0f ), mMusWea->GetWorldMatrix() );
 		TransformPoint( lvEnd, cVec3(-146.f, 41.f, WEAPON_RANGE), mMusWea->GetWorldMatrix() );
 
 		btCollisionWorld::ClosestRayResultCallback RayCallbackLaser(cPhysics::Get().Local2Bullet(lvStart), cPhysics::Get().Local2Bullet(lvEnd));
@@ -177,24 +236,25 @@ void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFire
 			TransformPoint( lvHit, mvRayHitPosition, mMusWea->GetWorldMatrix().Invert() );
 		else
 			lvHit = lvEnd;
-*/
 
 		// Ahora se calcula la trayectoria de la bala real
 		// Antes se calculo el rayo del laser de la torreta
-		float a = -30.0f;
-		float b = 30.0f;
+		float a = -4000.0f;
+		float b = 4000.0f;
 		float deviation_x = ((b - a) * ((float)rand() / RAND_MAX)) + a;
 		float deviation_y = ((b - a) * ((float)rand() / RAND_MAX)) + a;
 		float deviation_z = ((b - a) * ((float)rand() / RAND_MAX)) + a;
-		//float deviation = rand() % 10;
-		
+
+		// Este es el punto final con las direccion aleatorio
+		cVec3 lvEndPoint = cVec3(-146.f + deviation_x, 41.f + deviation_y, WEAPON_RANGE +  deviation_z);
+
 		TransformPoint( lvStart, cVec3(-146.0f, 41.0f, 10.0f ), mMusWea->GetWorldMatrix() );
-		TransformPoint( lvEnd, cVec3(-146.f + deviation_x, 41.f + deviation_y, WEAPON_RANGE +  deviation_z), mMusWea->GetWorldMatrix() );
+		TransformPoint( lvEnd, lvEndPoint, mMusWea->GetWorldMatrix() );
 
 		sprintf(buff1, " ini_x: %2.2f, ini_y: %2.2f, ini_z: %2.2f \n", -146.f, 41.f , 10.0f);
 		//OutputDebugStr(buff1);
 
-		sprintf(buff1, " final_x: %2.2f, final_y: %2.2f, final_z: %2.2f \n", -146.f + deviation_x, 41.f + deviation_y, WEAPON_RANGE +  deviation_z);
+		sprintf(buff1, " final_x: %2.2f, final_y: %2.2f, final_z: %2.2f \n", lvEnd.x, lvEnd.y, lvEnd.z);
 		//OutputDebugStr(buff1);
 
 		btCollisionWorld::ClosestRayResultCallback RayCallback(cPhysics::Get().Local2Bullet(lvStart), cPhysics::Get().Local2Bullet(lvEnd));
@@ -221,6 +281,7 @@ void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFire
 				if (lpBodyPtr != NULL) {
 					sprintf(buff1, "Hit! Hit!\n");
 					//OutputDebugStr(buff1);
+					lpBodyPtr->Damage();
 				}
 				else {
 					sprintf(buff1, "\n\n\n");
@@ -231,35 +292,6 @@ void Mustang::Update(float lfYaw, float lfPitch, bool lbIsCameraAux, bool lbFire
 
 
 		//mBullets.Create(lvStart, lvHit, lfyaw);
-
-		// Se construye la matriz de rotacion para el billboard del fogonazo del arma
-		// Primero se crea el vector que une la camara con el billboard
-		cVec3 lvCameraPos, lvCameraUp; 
-		TransformPoint( lvCameraPos, cGame::Get().Get3DCamera().GetPosition(), mMusWea->GetWorldMatrix() );
-		TransformPoint( lvCameraUp, cGame::Get().Get3DCamera().GetUp().Normalize(), mMusWea->GetWorldMatrix() );
-
-		cVec3 lvLook = lvCameraPos - lvStart ;
-		// Se normaliza
-		lvLook.Normalize();
-		// Ahora calculo el vector derecha del billboard (producto vectorial entre el vector look y el vector up (de la camara))
-		cVec3 lvRight, lvUp;
-		Cross(lvRight, lvCameraUp, lvLook);
-		// Calculo el vector up del propio billboard
-		Cross(lvUp, lvLook, lvRight);
-		// Se compone la matriz de rotacion del billboard
-		cVec4 lvColumn1 = cVec4(lvRight, 0.f); 
-		cVec4 lvColumn2 = cVec4(lvUp, 0.f); 
-		cVec4 lvColumn3 = cVec4(lvLook, 0.f); 
-		cVec4 lvColumn4 = cVec4(lvStart.x, lvStart.y, lvStart.z, 1.f); 
-
-		cMatrix lmBillboardMatrix = cMatrix(lvColumn1, lvColumn2, lvColumn3, lvColumn4);
-
-		float lfAngle = atan2f(lvLook.Normalize().x, lvLook.Normalize().z);
-
-		cMatrix lmRot;
-		lmRot.LoadRotation(cVec3(0.f, 1.f, 0.f), -lfAngle);
-
-		mBillboardMatrix =  lScaleMatrixChasis * lOffsetMatrix * /*lRotMatrix **/ lmPostTranslation *  cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform());
 	}
 
 	// Ahora se calcula la orientacion de la flecha de aviso de enemigos
@@ -329,33 +361,83 @@ void Mustang::Render(){
 	
 	// Si es la camara aux renderizar el muzzle lo ultimo
 	if (mbIsCamAux) {
-		// Renderiza interior
-		mMusInt->Render();
+		if (IsAlive()) {
 
-		// Renderiza el arma
-		mMusWea->Render();
+			// Renderiza interior
+			mMusInt->Render();
 
-		// Renderiza chasis
-		mMusExt->Render();
+			// Renderiza el arma
+			mMusWea->Render();
 
-		// Renderiza fogonazo del arma y laser
-		RenderRayGun ();
+			// Renderiza chasis
+			mMusExt->Render();
+
+			// Renderiza fogonazo del arma y laser
+			glDisable (GL_FOG);
+
+			RenderRayGun ();
+			RenderMuzzle();
+
+			glEnable (GL_FOG);
+
+		} else {
+
+			// Si esta destruido reemplaza el modelo por el coche destrozado
+			
+			// Renderiza interior
+			mMusIntDes->Render();
+
+			if (mState == eDEATH)
+				mExplosion.RenderSmoke();
+
+			// Renderiza chasis destruido
+			mMusExtDes->Render();
+
+			mExplosion.Render();
+
+		}
+
 	} else {
-		// Renderiza fogonazo del arma y laser
-		RenderRayGun ();
 
-		// Renderiza interior
-		mMusInt->Render();
+		if (IsAlive()) {
 
-		// Renderiza el arma
-		mMusWea->Render();
+			// Renderiza fogonazo del arma y laser
+			glDisable (GL_FOG);
 
-		// Renderiza chasis
-		mMusExt->Render();
+			RenderRayGun ();
+			RenderMuzzle();
+
+			glEnable (GL_FOG);
+
+			// Renderiza interior
+			mMusInt->Render();
+
+			// Renderiza el arma
+			mMusWea->Render();
+
+			// Renderiza chasis
+			mMusExt->Render();
+
+		} else {
+
+			// Si esta destruido reemplaza el modelo por el coche destrozado
+			
+			// Renderiza interior
+			mMusIntDes->Render();
+
+			if (mState == eDEATH)
+				mExplosion.RenderSmoke();
+
+			// Renderiza chasis destruido
+			mMusExtDes->Render();
+
+			mExplosion.Render();
+
+		}
 
 	}
 
-		mBullets.Render();
+		//mBullets.Render();
 }
 
 void Mustang::RenderRayGun () {
@@ -363,12 +445,12 @@ void Mustang::RenderRayGun () {
 	// Si se esta disparando el arma
 	if (mbIsFiring) {
 		// Primero pinta el laser del arma
-		glEnable(GL_BLEND);
-
 		//glBlendFunc(GL_DST_COLOR, GL_ONE);
 		//glBlendFunc(GL_DST_COLOR, GL_ZERO);
-		
 		//glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+
+		// He elegido esta funcion de blending porque se ve incluso sobre colores negros de fondo
+		glEnable(GL_BLEND);		
 		glBlendFunc(GL_ONE, GL_ONE);
 
 		// Enable antialiasing
@@ -382,32 +464,31 @@ void Mustang::RenderRayGun () {
 
 		// Se renderiza el rayo del laser de la torreta
 		// Si el rayo choca con un objeto entonces se para en ese objeto, si no hasta el alcance del arma 
-		/*if (mbLaserHit)
+		if (mbLaserHit)
 			TransformPoint( lvHitPoint, mvRayLaserHitPosition, mMusWea->GetWorldMatrix().Invert() );
 		else
 			lvHitPoint = cVec3(-146.f, 41.f, WEAPON_RANGE);
 
 			cGraphicManager::Get().DrawLine(cVec3(-146.0f, 41.0f, 10.0f ), lvHitPoint, cVec3(1.f, 0.f, 0.f), 0.5f);
-			cGraphicManager::Get().DrawSphere(lvHitPoint, cVec3(1.f, 0.f, 0.f));*/
+			cGraphicManager::Get().DrawSphere(lvHitPoint, cVec3(1.f, 0.f, 0.f), 0.5f);
 
 		// Ahora se renderiza la bala real con el desplazamiento calculado
-		if (mbHit)
+	/*	if (mbHit)
 			TransformPoint( lvHitPoint, mvRayHitPosition, mMusWea->GetWorldMatrix().Invert() );
 		else
 			lvHitPoint = mvRayHitPosition;
 
 		char buff1[256];
 		sprintf(buff1, "Punto de impacto: (%2.2f , %2.2f , %2.2f) \n", lvHitPoint.x, lvHitPoint.y, lvHitPoint.z);
-		OutputDebugStr(buff1);
+		//OutputDebugStr(buff1);
 
-			cGraphicManager::Get().DrawLine(cVec3(-146.0f, 41.0f, 10.0f ), lvHitPoint, cVec3(1.f, 0.f, 0.f), 0.5f);
-			cGraphicManager::Get().DrawSphere(lvHitPoint, cVec3(1.f, 0.f, 0.f), 0.5f);
+			cGraphicManager::Get().DrawLine(cVec3(-146.0f, 41.0f, 10.0f ), cVec3(lvHitPoint.x, lvHitPoint.y,lvHitPoint.z), cVec3(0.f, 0.f, 1.f), 0.2f);
+			cGraphicManager::Get().DrawSphere(lvHitPoint, cVec3(0.f, 0.f, 1.f), 0.2f);	*/
 
 		cGraphicManager::Get().SetWorldMatrix(lmPosMatrix.LoadIdentity());
 
 		glDisable(GL_BLEND);
 		glDisable(GL_LINE_SMOOTH);
-		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 		glColor4f(1,1,1,1.f);
 	}
 
@@ -428,35 +509,38 @@ void Mustang::Deinit(){
 
 void Mustang::RenderArrowEnemy () {
 
-	cMatrix lmRotate, lmTranslation;
-	lmRotate.LoadRotation(cVec3(0.f, 0.f, 1.f), mfEnemyArrow);
-	lmTranslation.LoadTranslation(cVec3(0.f, -330.f, 0.f));
-	
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_DST_COLOR, GL_ONE);
+	if (cGame::Get().GetTruck().IsAlive()) {
 
-	cGraphicManager::Get().SetWorldMatrix(lmTranslation * lmRotate);
-	
-	cTexture* lpTexture = (cTexture*) mArrowEnemy->GetResource();
-	glBindTexture(GL_TEXTURE_2D, lpTexture->GetTextureHandle());
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);					/* scale linearly when image bigger than texture*/
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);	/* scale linearly when image smalled than texture*/
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-	glBegin(GL_QUADS);
-
+		cMatrix lmRotate, lmTranslation;
+		lmRotate.LoadRotation(cVec3(0.f, 0.f, 1.f), mfEnemyArrow);
+		lmTranslation.LoadTranslation(cVec3(0.f, -330.f, 0.f));
 		
-		 glTexCoord2f(0.0f, 0.0f); glVertex3f(-25, -25, 0);	
-		 glTexCoord2f(1.0f, 0.0f); glVertex3f(25, -25, 0);
-		 glTexCoord2f(1.0f, 1.0f); glVertex3f(25, 25, 0);
-		 glTexCoord2f(0.0f, 1.0f); glVertex3f(-25, 25, 0); 
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_DST_COLOR, GL_ONE);
 
-	glEnd();
+		cGraphicManager::Get().SetWorldMatrix(lmTranslation * lmRotate);
+		
+		cTexture* lpTexture = (cTexture*) mArrowEnemy->GetResource();
+		glBindTexture(GL_TEXTURE_2D, lpTexture->GetTextureHandle());
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);					/* scale linearly when image bigger than texture*/
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);	/* scale linearly when image smalled than texture*/
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	cGraphicManager::Get().SetWorldMatrix(lmRotate.LoadIdentity());
-	glDisable(GL_BLEND);
-	glColor4f(1,1,1,1.f);
+		glBegin(GL_QUADS);
+
+			 glTexCoord2f(0.0f, 0.0f); glVertex3f(-25, -25, 0);	
+			 glTexCoord2f(1.0f, 0.0f); glVertex3f(25, -25, 0);
+			 glTexCoord2f(1.0f, 1.0f); glVertex3f(25, 25, 0);
+			 glTexCoord2f(0.0f, 1.0f); glVertex3f(-25, 25, 0); 
+
+		glEnd();
+
+		cGraphicManager::Get().SetWorldMatrix(lmRotate.LoadIdentity());
+		glDisable(GL_BLEND);
+		glColor4f(1,1,1,1.f);
+	
+	}
 
 }
 
@@ -468,11 +552,14 @@ void Mustang::RenderMuzzle() {
 		glBlendFunc(GL_ONE, GL_ONE);
 
 		cVec3 lvMuzzlePos;
-		TransformPoint( lvMuzzlePos, cVec3(-146.0f, 41.0f, 10.0f ), mMusWea->GetWorldMatrix()   *  cPhysics::Get().Bullet2Local(mVehicle.m_vehicle->getChassisWorldTransform()));
+		TransformPoint( lvMuzzlePos, cVec3(-146.0f, 41.0f, 10.0f ), mMusWea->GetWorldMatrix() );
+
 		cMatrix lmBillboardMatrix;
-		//lmBillboardMatrix.LoadTranslation(cVec3(-0.0f, 91.0f, -10.0f ));
 		lmBillboardMatrix.LoadTranslation(lvMuzzlePos);
 		cGraphicManager::Get().SetWorldMatrix(lmBillboardMatrix);
+
+		// Se aplica el billboard para ignorar la rotacion y orientar el quad a la camara
+		cGraphicManager::Get().BillboardCheatSphericalBegin();
 
 		// Ahora pinta el fogonazo del arma
 		glColor4f (1.f, 1.f, 1.f, 1.f);
@@ -507,27 +594,15 @@ void Mustang::RenderMuzzle() {
 
 				glBegin(GL_QUADS);
 
-				 glTexCoord2f(0.0f, 0.0f); glVertex3f(-25, -25, 0);	
-				 glTexCoord2f(1.0f, 0.0f); glVertex3f(25, -25, 0);
-				 glTexCoord2f(1.0f, 1.0f); glVertex3f(25, 25, 0);
-				 glTexCoord2f(0.0f, 1.0f); glVertex3f(-25, 25, 0); 
-
-
-					//glVertex3f(0, 0, 0);
-				/*	glTexCoord2f(0.0f, 1.0f); glVertex3f(0, -5, 0); //glVertex3f(-156.f, 31.f, 10.f);	
-
-					//glVertex3f(5, 0, 0);
-					glTexCoord2f(1.0f, 1.0f); glVertex3f(5, -5, 0); //glVertex3f(-136.f, 31.f, 10.f);
-
-					//glVertex3f(5, 10, 0);
-					glTexCoord2f(1.0f, 0.0f); glVertex3f(5, 5, 0); //glVertex3f(-136.f, 51.f, 10.f);
-
-					//glVertex3f(0, 10, 0);
-					glTexCoord2f(0.0f, 0.0f); glVertex3f(0, 5, 0); //glVertex3f(-156.f, 51.f, 10.f);*/
-
+				 glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5, -0.5, 0);	
+				 glTexCoord2f(1.0f, 0.0f); glVertex3f(0.5, -0.5, 0);
+				 glTexCoord2f(1.0f, 1.0f); glVertex3f(0.5, 0.5, 0);
+				 glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5, 0.5, 0); 
 
 				glEnd();
 		}
+
+		cGraphicManager::Get().BillboardEnd();
 
 		cGraphicManager::Get().SetWorldMatrix(lmBillboardMatrix.LoadIdentity());
 
@@ -535,5 +610,96 @@ void Mustang::RenderMuzzle() {
 		glColor4f(1,1,1,1.f);
 
 	}
+
+}
+
+void Mustang::RenderHUD () {
+
+	if (IsAlive()) {
+
+		cMatrix lmRotate, lmTranslation;
+		lmRotate.LoadRotation(cVec3(0.f, 0.f, 1.f), PI);
+		lmTranslation.LoadTranslation(cVec3(0.f, -250.f, 0.f));
+		
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_DST_COLOR, GL_ONE);
+
+		cGraphicManager::Get().SetWorldMatrix(lmRotate*lmTranslation);
+		
+		cTexture* lpTexture = (cTexture*) mPosAmmu->GetResource();
+		glBindTexture(GL_TEXTURE_2D, lpTexture->GetTextureHandle());
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);					/* scale linearly when image bigger than texture*/
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);	/* scale linearly when image smalled than texture*/
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+		glBegin(GL_QUADS);
+
+  			 glTexCoord2f(1.0f, 0.0f); glVertex3f(40, -40, 0);
+			 glTexCoord2f(0.0f, 0.0f); glVertex3f(-40, -40, 0);
+			 glTexCoord2f(0.0f, 1.0f); glVertex3f(-40, 40, 0); 
+			 glTexCoord2f(1.0f, 1.0f); glVertex3f(40, 40, 0);
+
+		glEnd();
+
+		cGraphicManager::Get().SetWorldMatrix(lmTranslation.LoadIdentity());
+		glDisable(GL_BLEND);
+		glColor4f(1,1,1,1.f);
+	
+	}
+
+}
+
+// Chequea las vidas protagonista
+bool Mustang::IsAlive() {
+
+	return ((miCurrentLives > 0)? true : false);
+
+}
+
+void Mustang::Damage() {
+
+	if (IsAlive()) {
+		// Se marca al protagonista como recien destruido
+		((miCurrentLives == 1)? mState = eDESTROYED : eREADY);
+		miCurrentLives--;
+	}
+
+}
+
+void Mustang::Crosshair() {
+	// Crosshair  
+
+	if (!IsAlive())
+		return;
+
+	cMatrix lmCrosshairTranslation, lmCrosshairRotation;
+
+	lmCrosshairRotation.LoadRotation(cVec3(0.f, 0.f, 1.f), PI * mCHRotationCount);
+	lmCrosshairTranslation.LoadTranslation(cVec3(mYaw - (cGame::Get().GetGameWidth() / 2), -mPitch + (cGame::Get().GetGameHeight() / 2), 0));
+	cGraphicManager::Get().SetWorldMatrix(lmCrosshairRotation * lmCrosshairTranslation);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glColor4f(1,1,1,1);
+
+	cTexture* lpTexture = (cTexture*) mCrosshair->GetResource();
+	glBindTexture(GL_TEXTURE_2D, lpTexture->GetTextureHandle());
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);					/* scale linearly when image bigger than texture*/
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);	/* scale linearly when image smalled than texture*/
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glBegin(GL_QUADS);
+		glTexCoord2d(1,1); glVertex2f(30, 30);
+		glTexCoord2d(1,0); glVertex2f(30, -30);
+		glTexCoord2d(0,0); glVertex2f(-30, -30);
+		glTexCoord2d(0,1); glVertex2f(-30, 30);
+	glEnd();
+
+
+	glDisable(GL_BLEND);  
+
+	cGraphicManager::Get().SetWorldMatrix(lmCrosshairTranslation.LoadIdentity());
 
 }
