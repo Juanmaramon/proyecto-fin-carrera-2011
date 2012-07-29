@@ -28,6 +28,7 @@ void Skybox::CreateSkyBox(float x, float y, float z, float width, float height, 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
         // Start drawing the side as a QUAD
+
 	    glBegin(GL_QUADS);		
 		// Assign the texture coordinates and vertices for the BACK Side
 /*		glTexCoord2f(1.0f, 0.0f); glVertex3f(x + width, y, z);
@@ -57,7 +58,7 @@ void Skybox::CreateSkyBox(float x, float y, float z, float width, float height, 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-
+		glColor4d(1,1,1,1.0f);
 	    // Start drawing the side as a QUAD
 	    glBegin(GL_QUADS);	
 		// Assign the texture coordinates and vertices for the FRONT Side
@@ -208,6 +209,14 @@ void Skybox::Init(){
 }
 
 void Skybox::Render(){
-    glColor3f(1.f, 1.f, 1.f);
-    CreateSkyBox(0, 5, 0, 2390, 2200, 2390);   // Render Inner Layer
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	//glColor4d (.75f,.75f,.75f,1);
+	glColor4d(2,2,2,1.f);
+	//glColor3f(1.f, 1.f, 1.f);
+   // CreateSkyBox(0, 5, 0, 2390, 2200, 2390);   // Render Inner Layer
+	 CreateSkyBox(0, 5, 0, 3072, 2200, 3072);   // Render Inner Layer
+	glDisable(GL_BLEND);
 }

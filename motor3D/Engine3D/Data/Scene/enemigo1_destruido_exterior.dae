@@ -24,12 +24,12 @@
     </image>
   </library_images>
   <library_materials>
-    <material id="blinn3_exteriot_destruido" name="blinn3_exteriot_destruido">
-      <instance_effect url="#blinn3_exteriot_destruido-fx"/>
+    <material id="light_exteriot_destruido" name="light_exteriot_destruido">
+      <instance_effect url="#light_exteriot_destruido-fx"/>
     </material>
   </library_materials>
   <library_effects>
-    <effect id="blinn3_exteriot_destruido-fx" name="blinn3_exteriot_destruido">
+    <effect id="light_exteriot_destruido-fx" name="light_exteriot_destruido">
       <profile_COMMON>
         <technique sid="standard">
           <phong>

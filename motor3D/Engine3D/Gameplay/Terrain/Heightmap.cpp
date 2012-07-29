@@ -136,8 +136,8 @@ void Heightmap::Create(btScalar& minHeight, btScalar& maxHeight){
 
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
-	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);					/* scale linearly when image bigger than texture*/
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);	/* scale linearly when image smalled than texture*/
 
 	if (detail){
 		// Activate the second texture ID and bind the fog texture to it
@@ -155,8 +155,8 @@ void Heightmap::Create(btScalar& minHeight, btScalar& maxHeight){
 		
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
-		glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);					/* scale linearly when image bigger than texture*/
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);	/* scale linearly when image smalled than texture*/
 
 		// Now we want to enter the texture matrix.  This will allow us
 		// to change the tiling of the detail texture.
@@ -272,13 +272,15 @@ void Heightmap::Create(btScalar& minHeight, btScalar& maxHeight){
 
 void Heightmap::Render(){
 	glPushMatrix();
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);	
+	//glColor4f(1.0f, 1.0f, 1.0f, 1.0f);	
+	glColor4d (.73f,.73f,.73f,1);
 	//glTranslatef(/*-BULLET_MAP_SIZE * 0.5f*/ -390.f, -140.f, -950.f /*-BULLET_MAP_SIZE * 0.5f*/); 
 	glTranslatef(-MAP_SIZE/2.f, -10.f, -MAP_SIZE/2.f);	
 	glEnable(GL_TEXTURE_2D);
 	glCallList(disp_list_id);
 	glDisable(GL_TEXTURE_2D);
 	glPopMatrix();
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 /// removes all objects from the world

@@ -24,12 +24,12 @@
     </image>
   </library_images>
   <library_materials>
-    <material id="blinn3_arma_destruido" name="blinn3_arma_destruido">
-      <instance_effect url="#blinn3_arma_destruido-fx"/>
+    <material id="light_arma_destruido" name="light_arma_destruido">
+      <instance_effect url="#light_arma_destruido-fx"/>
     </material>
   </library_materials>
   <library_effects>
-    <effect id="blinn3_arma_destruido-fx" name="blinn3_arma_destruido">
+    <effect id="light_arma_destruido-fx" name="light_arma_destruido">
       <profile_COMMON>
         <technique sid="standard">
           <phong>

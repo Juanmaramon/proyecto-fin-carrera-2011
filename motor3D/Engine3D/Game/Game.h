@@ -16,6 +16,12 @@
 #include "..\Gameplay\Vehicle\Mustang.h"
 #include "..\Gameplay\Terrain\Heightmap.h"
 #include "..\Gameplay\Vehicle\Truck.h"
+#include "..\Gameplay\Terrain\Ruin.h"
+#include "..\Gameplay\Terrain\Bush.h"
+
+#define RUINS_NUMBER 5
+
+#define BUSH_NUMBER 20
 
 //Clase que hace uso del Patrón Singleton definido en Singleton.h, para iniciar, actualizar, dibujar
 // y finalizar el juego
@@ -34,17 +40,25 @@ protected:
 		cCamera m2DCamera;
 		//Instancia de la clase cFont para crear texto.
 		cFont mFont;
+
+		cPhysicObject mModelObject;
 		//Instancia de la clase cResourceHandle que se encarga de manejar la escena del juego.
 		cResourceHandle mDuck;
 		cResourceHandle mMusExt;
 		cResourceHandle mMusInt;
 		cResourceHandle mMusMet;
 		cResourceHandle mMusNeu;
+
 		Mustang mMustang;
 		cObject mTire;
 		cObject mExt;
 		cObject mInt;
 		cObject mMet;
+
+		// Mustang destruido
+		cResourceHandle mMustangExtDes;
+		cResourceHandle mMustangIntDes;
+		cObject mMustangExteriorDes, mMustangInteriorDes;
 
 		// Enemigo 1 (Truck)
 		cResourceHandle mTruckNeu;
@@ -54,6 +68,25 @@ protected:
 		cObject mTruckTire;
 		cObject mTruckExterior;
 		cObject mTruckWea;
+
+		// Enemigo 1 destruido (Truck)
+		cResourceHandle mTruckExtDes;
+		cResourceHandle mTruckWeaDes;
+		cObject mTruckExteriorDes;
+		cObject mTruckWeaponDes;
+
+		// Ruina
+		cResourceHandle mRuinModel;
+		cObject mRuinObs;
+		Ruin mRuin;
+		std::vector<Ruin> maRuins;
+
+		// Matorral
+		cResourceHandle mBushTexture, mBushTextureMask;
+		Bush mBush;
+		std::vector<Bush> maBushes;
+
+		cResourceHandle mCrosshair;
 
 		cResourceHandle mItemCongelacion;
 
@@ -75,8 +108,12 @@ protected:
 		//Vehicle mVehicle;
 		// Skybox
 		Skybox mSkybox;
-		// Weapon muzzle
-		cResourceHandle mWeaponMuzzle1, mWeaponMuzzle2, mWeaponMuzzle3, mArrowEnemy;
+		// Weapon muzzle y distintas texturas del HUD
+		cResourceHandle mWeaponMuzzle1, mWeaponMuzzle2, mWeaponMuzzle3, mArrowEnemy, mPositiveAmmunition, mExplosion_sprite, mExplosion_sprite1, mParticle;
+		// Contador para efecto de niebla variable
+		int miFogStep;
+		float mfFogDensity;
+		bool mbFogIncreasing;
 public:
 	
 	//Función para inicializar el juego	
@@ -102,6 +139,8 @@ public:
 	
 	// Get camera object
 	cCamera Get3DCamera(){ return m3DCamera; };
+	// Get camera object
+	cCamera Get2DCamera(){ return m2DCamera; };
 	
 	float mfAcTime;
 
@@ -120,7 +159,9 @@ public:
 
 	Mustang GetMustang() { return mMustang; }
 	Truck GetTruck() { return mTruck; }
-
+	
+	unsigned int GetGameWidth() { return mProperties.muiWidth; }
+	unsigned int GetGameHeight() { return mProperties.muiHeight; }
 };
 
 #endif

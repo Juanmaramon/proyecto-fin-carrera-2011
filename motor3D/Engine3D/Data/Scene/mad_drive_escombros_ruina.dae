@@ -21,12 +21,12 @@
     </image>
   </library_images>
   <library_materials>
-    <material id="blinn3_ruina" name="blinn3_ruina">
-      <instance_effect url="#blinn3_ruina-fx"/>
+    <material id="light_ruina" name="light_ruina">
+      <instance_effect url="#light_ruina-fx"/>
     </material>
   </library_materials>
   <library_effects>
-    <effect id="blinn3_ruina-fx" name="blinn3_ruina">
+    <effect id="light_ruina-fx" name="light_ruina">
       <profile_COMMON>
         <technique sid="standard">
           <lambert>

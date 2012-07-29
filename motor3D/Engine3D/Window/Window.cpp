@@ -148,6 +148,8 @@ bool cWindow :: Init( cApplicationProperties &lProperties )
 	   lExStyle=WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
 	   // Windows Style
 	   lStyle=WS_OVERLAPPEDWINDOW;
+	   // Hide Mouse Pointer
+	   ShowCursor(FALSE);
 	}
 	RECT lWindowRect;
 	lWindowRect.left = (long)0;
