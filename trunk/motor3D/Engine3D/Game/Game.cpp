@@ -72,8 +72,9 @@ bool cGame::Init()
 	// Se inicializa en modo rasterizacion solida
 	mbRasterizationMode = true;
 
-	mMustang.Init(&mExt, &mInt, &mMet, &mTire, &mWeaponMuzzle1, &mWeaponMuzzle2, &mWeaponMuzzle3, &mArrowEnemy, &mPositiveAmmunition, &mMustangExteriorDes, &mMustangInteriorDes
-		, &mExplosion_sprite, &mExplosion_sprite1, &mParticle, &mCrosshair);
+	mMustang.Init(&mExt, &mInt, &mMet, &mTire, &mWeaponMuzzle1, &mWeaponMuzzle2, &mWeaponMuzzle3, &mArrowEnemy, &mPositiveAmmunition, &mNegativeAmmunition, 
+		&mMustangExteriorDes, &mMustangInteriorDes
+		, &mExplosion_sprite, &mExplosion_sprite1, &mParticle, &mCrosshair, &mhud1, &mhud1_mask, &mPositivelive, &mNegativelive);
 
 	// Incializacion de enemigo 1 (Truck)
 	mTruck.Init(cVec3(0.f, 0.0f, -90.f), &mTruckExterior, &mTruckWea, &mTruckTire, &mWeaponMuzzle1, &mWeaponMuzzle2, &mWeaponMuzzle3, &mTruckExteriorDes, &mTruckWeaponDes, &mExplosion_sprite, &mExplosion_sprite1, &mParticle);
@@ -267,6 +268,9 @@ void cGame::Update( float lfTimestep )
 		// Si no esta vivo el jugador entonces no puede disparar
 		(!mMustang.IsAlive())?lbFireMainWeapon = false : lbFireMainWeapon = lbFireMainWeapon; 
 
+		// Resetea estados de daño
+		InitDamageStates();
+
 		mMustang.Update(lfTimestep, lfYaw, lfPitch, lbAuxCamera, lbFireMainWeapon);
 		mTruck.Update(lfTimestep);
 
@@ -288,6 +292,9 @@ void cGame::Update( float lfTimestep )
 		if (lfYaw || lfPitch){
 			mGodCamera.MoveYawPitch(lfYaw, lfPitch, lfTimestep);
 		}
+
+		// Resetea estados de daño
+		InitDamageStates();
 
 		mMustang.Update(lfTimestep, lfYaw, lfPitch);
 		mTruck.Update(lfTimestep);
@@ -322,7 +329,7 @@ void cGame::Update( float lfTimestep )
 	// Check if the animation keys (stop/start) are pressed
 	cSkeletalMesh* lpSkeletonMesh =(cSkeletalMesh*)mSkeletalMesh.GetResource();
 
-	static bool mbJogging = false;
+	/*static bool mbJogging = false;
 
 	bool lbPlayJogPressed = BecomePressed(eIA_PlayJog);
 	bool lbStopJogPressed = BecomePressed(eIA_StopJog);
@@ -345,7 +352,7 @@ void cGame::Update( float lfTimestep )
 		lpSkeletonMesh->PlayAnim("Wave", 1.0f, 0.1f, 0.1f);
 	}else if (lbStopWavePressed){
 		lpSkeletonMesh->StopAnim("Wave", 0.1f);
-	}
+	}*/
 	
 	//Se comprueba si hay que cerrar la aplicación, por ejemplo a causa de 
 	// que el usuario haya cerrado la ventana. 
@@ -360,6 +367,11 @@ void cGame::Update( float lfTimestep )
 	{
 		return;
 	}	
+}
+
+void cGame::InitDamageStates(){
+	mMustang.GettingDamage(false);
+	mTruck.GettingDamage(false);
 }
 
 //Función para renderizar el juego:
@@ -484,7 +496,7 @@ void cGame::Render()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 	//Se dibujan algunas cadenas de texto.
-	glEnable(GL_TEXTURE_2D);
+	/*glEnable(GL_TEXTURE_2D);
 	mFont.SetColour( 1.0f, 0.0f, 0.0f, 0.9f );
 	char string_lives[251];
 	sprintf(string_lives, "Lives: %d", mMustang.GetCurrentLives());
@@ -492,7 +504,7 @@ void cGame::Render()
 	if (mMustang.IsAlive())
 		mFont.Write(500, -280, 0, string_lives, 0, FONT_ALIGN_RIGHT); 
 	else 	
-		mFont.Write(470, -280, 0, "You are death!", 0, FONT_ALIGN_RIGHT);
+		mFont.Write(470, -280, 0, "You are death!", 0, FONT_ALIGN_RIGHT);*/
 
 	//mFont.SetColour( 0.0f, 1.0f, 1.0f, 0.9f );
 	//mFont.WriteBox(100, 100, 0, 100, "Esto es un test \nmultilinea", 0, FONT_ALIGN_CENTER);
@@ -505,108 +517,338 @@ void cGame::Render()
 	cGraphicManager::Get().SwapBuffer();
 }
 
-//Función para cargar los recursos necesarios para el juego.
-bool cGame::LoadResources( void )
-{
+bool cGame::LoadWindowProperties( void ) {
+
 	//Se rellena la estructura de tipo cApplicationProperties: 
 	mProperties.macApplicationName = "Mad Drive";
 	mProperties.mbFullscreen = false;
 	mProperties.muiBits = 16;
-//	mProperties.muiWidth = 640;
-	mProperties.muiWidth = 1024;
-//	mProperties.muiHeight = 480;	
+	mProperties.muiWidth = 1024;	
 	mProperties.muiHeight = 768;
 
 	//Se inicializa el objeto ventana con la propiedades establecidas:
     bool lbResult = cWindow::Get().Init( mProperties );
-		
+
+	return lbResult;
+}
+
+bool cGame::Load3DCameraProperties( void ) {
+
+	// Init Camera 3D
+	m3DCamera.Init();  
+	// Inicializa camara godmode
+	mGodCamera.Init();
+	float lfAspect = (float)mProperties.muiWidth/(float)mProperties.muiHeight;
+	m3DCamera.SetPerspective(45.0f, lfAspect,0.1f, 5000.0f);
+	mGodCamera.SetPerspective( 45.0f, lfAspect, 0.1f, 10000.0f );
+
+	//Se aleja la cámara para ver bien la escena que vamos a cargar posteriormente.
+	m3DCamera.SetLookAt( cVec3(0.f, 1.5f, 20.f), cVec3(0.f, 1.5f, 0.f), cVec3(0.0f, 1.f, 0.f) );
+
+	// Resetea color de fondo
+	glClearColor(1.0f, 0.9f, 0.7f, 1.0f);
+	// Ocultar geometria no mostrada
+	glEnable(GL_CULL_FACE);
+
+	return true;
+
+}
+
+bool cGame::Load2DCameraProperties( void ) {
+
+	//Init Camera 2D, para las cadenas de texto.
+	//Se inicializa la cámara 2D con una perspectiva ortogonal.
+	//El (0,0) está situado en el centro de la pantalla y las dimensiones están 
+	// establecidas en píxeles.
+	float lfRight = (float)mProperties.muiWidth / 2.0f;
+	float lfLeft = -lfRight;
+	float lfTop = (float)mProperties.muiHeight / 2.0f;
+	float lfBottom = -lfTop;
+	m2DCamera.Init();
+	m2DCamera.SetOrtho(lfLeft, lfRight, lfBottom, lfTop, 0.1f, 100.0f);
+	//Se pone la cámara2D en la posición (0,0) de nuestro mundo,
+	// apuntando al origen del mismo, e indicando que el vector UP de la cámara apunta hacia arriba.
+	m2DCamera.SetLookAt( cVec3(0.0f, 0.0f, 1.f), cVec3(0.0f, 0.f, 0.f), cVec3(0.0f, 1.f, 0.f) );
+
+	return true;
+
+}
+
+bool cGame::LoadIAProperties( void ) {
+	//Se inicializa la clase que contendrá la lista de personajes.
+	bool lbResult = cCharacterManager::Get().Init();
+	//Se inicializa la clase que contendrá los comportamientos de los personajes.
+	lbResult = lbResult && cBehaviourManager::Get().Init();
+	if (lbResult)
+	{
+		//Se inicializa Lua.
+		cLuaManager::Get().Init();
+		//Se registran las funciones C++ para usar desde Lua.
+		RegisterLuaFunctions();
+		//Cargamos el fichero de script
+		cLuaManager::Get().DoFile("Data/Scripts/character.lua");
+		cCharacterManager::Get().DebugCharacter();
+		cLuaManager::Get().DoFile("Data/Scripts/patrol.lua");
+	}
+
+	return lbResult;
+}
+
+bool cGame::LoadManagerProperties( void ) {
+
+	//Se inicializa la clase cInputManager que representa el gestor de entrada (keyboard, gamepad, mouse, ...).
+	//Se le pasa la tabla "kaActionMapping" (de InputConfiguration.cpp) que indica la relación entre las acciones y los dispositivos.
+	//También se pasa "eIA_Count" (de InputConfiguration.h) que indica cuantas acciones de entrada hay.
+	cInputManager::Get().Init( kaActionMapping, eIA_Count );
+
+	// Initialization of physics object 
+	cPhysics::Get().Init();
+
+	//Se inicializa la clase que gestiona los materiales.
+	cMaterialManager::Get().Init(30);
+
+	// Init of effects management
+	cEffectManager::Get().Init(20);
+
+	// Init the Font.
+	//mFont.Init("./Data/Fonts/Test1.fnt");
+	mFont.Init("./Data/Fonts/font2.fnt");
+
+	//Se inicializa el gestor de mallas: habrá 4 mallas en la escena (mirar ./Data/Scene/) + Skeletal mesh.
+	cMeshManager::Get().Init(30);
+
+	//Se inicializa el gestor de escenas.
+	cSceneManager::Get().Init(30);  
+
+	cSkeletalManager::Get().Init(5);
+
+	return true;
+
+}
+
+bool cGame::LoadVehicles( void ) {
+			
+	mMusExt = cSceneManager::Get().LoadResource( "Mustang_exterior", "./Data/Scene/mustang_exterior1.dae" ); 			
+	mMusInt = cSceneManager::Get().LoadResource( "Mustang_interior", "./Data/Scene/mustang_interior.dae" ); 
+	mMusMet = cSceneManager::Get().LoadResource( "Mustang_metralleta", "./Data/Scene/mustang_metralleta.dae" ); 
+	mMustangExtDes = cSceneManager::Get().LoadResource( "Mustang_exterior_des", "./Data/Scene/mustang_destruido_exterior.dae" ); 			
+	mMustangIntDes = cSceneManager::Get().LoadResource( "Mustang_interior_des", "./Data/Scene/mustang_destruido_interior.dae" ); 
+	mMusNeu = cSceneManager::Get().LoadResource( "Mustang_neumatico", "./Data/Scene/mustang_neumatico.dae" ); 
+	
+	mTruckNeu = cSceneManager::Get().LoadResource( "Truck_neumatico", "./Data/Scene/enemigo1_rueda.dae" );
+	mTruckArm = cSceneManager::Get().LoadResource( "Truck_arma", "./Data/Scene/enemigo1_arma.dae" );
+	mTruckExt = cSceneManager::Get().LoadResource( "Truck_exterior", "./Data/Scene/enemigo1_exterior.dae" );
+	mTruckExtDes = cSceneManager::Get().LoadResource( "Truck_exterior_destruido", "./Data/Scene/enemigo1_destruido_exterior.dae" ); 			
+	mTruckWeaDes = cSceneManager::Get().LoadResource( "Truck_arma_destruido", "./Data/Scene/enemigo1_destruido_arma.dae" ); 
+
+	return true;
+
+}
+
+bool cGame::LoadHUD( void ) {
+
+	mWeaponMuzzle1 = cTextureManager::Get().LoadResource( "Weapon_muzzle1", "Data/Scene/images/flash_disparo/muzzle_flash_1.jpg" ); 
+	mWeaponMuzzle2 = cTextureManager::Get().LoadResource( "Weapon_muzzle2", "Data/Scene/images/flash_disparo/muzzle_flash_2.jpg" );
+	mWeaponMuzzle3 = cTextureManager::Get().LoadResource( "Weapon_muzzle3", "Data/Scene/images/flash_disparo/muzzle_flash_3.jpg" );
+	mArrowEnemy = cTextureManager::Get().LoadResource( "Arrow_enemy", "Data/Scene/images/hud/enemy_arrow.jpg" );
+	mPositiveAmmunition = cTextureManager::Get().LoadResource( "Positive_ammunition", "Data/Scene/images/hud/icono_municion_positiva_hud.png" );
+	mNegativeAmmunition = cTextureManager::Get().LoadResource( "Negative_ammunition", "Data/Scene/images/hud/icono_municion_negativa_hud.png" );
+	mPositivelive = cTextureManager::Get().LoadResource( "Positive_live", "Data/Scene/images/hud/icono_vida_positiva_hud.png" );
+	mNegativelive = cTextureManager::Get().LoadResource( "Negative_live", "Data/Scene/images/hud/icono_vida_negativa_hud.png" );
+	mCrosshair = cTextureManager::Get().LoadResource( "Mirilla", "./Data/Scene/images/mirilla/crosshair.png" );
+	mItemCongelacion = cSceneManager::Get().LoadResource( "Item_congelacion", "./Data/Scene/especial_congelacion.dae" );
+	mhud1 = cTextureManager::Get().LoadResource( "Hud1", "Data/Scene/images/hud/hud_mad_drive1.png" );
+	mhud1_mask = cTextureManager::Get().LoadResource( "Hud1_mask", "Data/Scene/images/hud/hud_mad_drive1_mask.png" );
+
+	return true;
+
+}
+
+bool cGame::LoadEffects( void ) {
+
+	mExplosion_sprite = cTextureManager::Get().LoadResource( "Explosion_sprite", "./Data/Scene/images/explosion/explosion_sprite1.tga" ); 
+	mExplosion_sprite1 = cTextureManager::Get().LoadResource( "Explosion_sprite1", "Data/Scene/images/explosion/texture_explosion1.tga" ); 
+	mParticle = cTextureManager::Get().LoadResource( "Particle_system", "Data/Scene/images/sist_particulas/fog_text.png" );
+	
+	return true;
+
+}
+
+bool cGame::LoadObstacles( void ) {
+
+	mRuinModel = cSceneManager::Get().LoadResource( "Ruina", "./Data/Scene/mad_drive_escombros_ruina.dae" ); 
+	mBushTexture = cTextureManager::Get().LoadResource( "Matorral", "./Data/Scene/images/matorral/matorral_1.png" );
+	mBushTextureMask = cTextureManager::Get().LoadResource( "Matorral_mask", "./Data/Scene/images/matorral/matorral_mask.png" );
+			
+	return true;
+
+}
+
+bool cGame::LoadWorld( void ) {
+
+	// Inicializa skybox
+	mSkybox.Init();
+
+	// Terrain object
+	mHeightmap.Load();
+
+	return true;
+
+}
+
+bool cGame::LoadObjects( void ) {
+
+	// Physics object in the game
+	mModelObject = *((cPhysicObject*) ((cScene *)mItemCongelacion.GetResource())->getSubObject( 0 ));
+
+	// Inicializacion del vehiculo (Mustang)
+	mTire = *((cObject*) ((cScene *)mMusNeu.GetResource())->getSubObject(0));
+	mExt = *((cObject*) ((cScene *)mMusExt.GetResource())->getSubObject(0));
+	mInt = *((cObject*) ((cScene *)mMusInt.GetResource())->getSubObject(0));
+	mMet = *((cObject*) ((cScene *)mMusMet.GetResource())->getSubObject(0));
+
+	mMustangExteriorDes = *((cObject*) ((cScene *)mMustangExtDes.GetResource())->getSubObject(0));
+	mMustangInteriorDes = *((cObject*) ((cScene *)mMustangIntDes.GetResource())->getSubObject(0));
+
+	mTruckExterior = *((cObject*) ((cScene *)mTruckExt.GetResource())->getSubObject(0));
+	mTruckWea = *((cObject*) ((cScene *)mTruckArm.GetResource())->getSubObject(0));
+	mTruckTire = *((cObject*) ((cScene *)mTruckNeu.GetResource())->getSubObject(0));
+	mTruckExteriorDes = *((cObject*) ((cScene *)mTruckExtDes.GetResource())->getSubObject(0));
+	mTruckWeaponDes = *((cObject*) ((cScene *)mTruckWeaDes.GetResource())->getSubObject(0));
+
+	mRuinObs = *((cObject*) ((cScene *)mRuinModel.GetResource())->getSubObject(0));
+
+	return true;
+
+}
+
+void cGame::RenderProgressBar ( float progress ) 
+{
+
+	cMatrix lmTranslation;
+	lmTranslation.LoadTranslation(cVec3(-300.f, 10.f, 0.f));
+
+	cGraphicManager::Get().SetWorldMatrix(lmTranslation);
+	
+	glDisable(GL_TEXTURE_2D);
+		cGraphicManager::Get().DrawRect(0.f, 0.f, 600.f * progress, 2.f, cVec3(progress, 0.f, 0.f));
+		//cGraphicManager::Get().DrawRect(0.f, 0.f, 200.f, 2.f, cVec3(1.f, 0.f, 0.f)); 
+	glEnable(GL_TEXTURE_2D);
+
+	cGraphicManager::Get().SetWorldMatrix(lmTranslation.LoadIdentity());
+
+}
+
+void cGame::RenderTitleLoad ( float progress ) 
+{
+
+	// Titulo MAD DRIVE
+
+	cMatrix lmTranslation;
+	lmTranslation.LoadTranslation(cVec3(0.f, 220.f, 0.f));
+
+	cGraphicManager::Get().SetWorldMatrix(lmTranslation);
+	
+	cTexture* lpTexture;
+	if (progress == 1.f)
+		lpTexture = (cTexture*) mMad_drive.GetResource();
+	else
+		lpTexture = (cTexture*) mMad_drive_loading.GetResource();
+	glBindTexture(GL_TEXTURE_2D, lpTexture->GetTextureHandle());
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);					// scale linearly when image bigger than texture
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);	// scale linearly when image smalled than texture
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glBegin(GL_QUADS);
+
+		 glTexCoord2f(0.0f, 1.0f); glVertex3f(-90, -50, 0);
+		 glTexCoord2f(1.0f, 1.0f); glVertex3f(90, -50, 0);
+		 glTexCoord2f(1.0f, 0.0f); glVertex3f(90, 50, 0);
+		 glTexCoord2f(0.0f, 0.0f); glVertex3f(-90, 50, 0);
+
+	glEnd();
+
+	cGraphicManager::Get().SetWorldMatrix(lmTranslation.LoadIdentity());
+
+	// LOADING
+
+	lmTranslation.LoadTranslation(cVec3(0.f, 70.f, 0.f));
+
+	cGraphicManager::Get().SetWorldMatrix(lmTranslation);
+	
+	lpTexture = (cTexture*) mLoading.GetResource();
+	glBindTexture(GL_TEXTURE_2D, lpTexture->GetTextureHandle());
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);					// scale linearly when image bigger than texture
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);	// scale linearly when image smalled than texture
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glBegin(GL_QUADS);
+
+		 glTexCoord2f(0.0f, 1.0f); glVertex3f(-90, -50, 0);
+		 glTexCoord2f(1.0f, 1.0f); glVertex3f(90, -50, 0);
+		 glTexCoord2f(1.0f, 0.0f); glVertex3f(90, 50, 0);
+		 glTexCoord2f(0.0f, 0.0f); glVertex3f(-90, 50, 0);
+
+	glEnd();
+
+	cGraphicManager::Get().SetWorldMatrix(lmTranslation.LoadIdentity());
+
+}
+
+void cGame::RenderProgress ( float progress ) 
+{
+
+	RenderTitleLoad(progress);
+	RenderProgressBar(progress);
+	
+	cGraphicManager::Get().SwapBuffer();
+
+}
+
+//Función para cargar los recursos necesarios para el juego.
+bool cGame::LoadResources( void )
+{
+
+	bool lbResult;
+
+	lbResult = LoadWindowProperties();
+
 	if ( lbResult )
 	{
 		//Se inicializa la clase que encapsula las operaciones de OpenGL:
 		lbResult = cGraphicManager::Get().Init( &cWindow::Get() );   
+
+		// Clean Window context
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     
+		// Resetea color de fondo
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
 		if (lbResult)
 		{
-			// Init Camera 3D
-			m3DCamera.Init();  
-			// Inicializa camara godmode
-			mGodCamera.Init();
-			float lfAspect = (float)mProperties.muiWidth/(float)mProperties.muiHeight;
-			m3DCamera.SetPerspective(45.0f, lfAspect,0.1f, 5000.0f);
-			mGodCamera.SetPerspective( 45.0f, lfAspect, 0.1f, 10000.0f );
-	
-			//Se aleja la cámara para ver bien la escena que vamos a cargar posteriormente.
-			m3DCamera.SetLookAt( cVec3(0.f, 1.5f, 20.f), cVec3(0.f, 1.5f, 0.f), cVec3(0.0f, 1.f, 0.f) );
-
-			// Resetea color de fondo
-			glClearColor(1.0f, 0.9f, 0.7f, 1.0f);
-			// Ocultar geometria no mostrada
-			glEnable(GL_CULL_FACE);
-
-			//Se inicializa la clase que contendrá la lista de personajes.
-			lbResult = cCharacterManager::Get().Init();
-			//Se inicializa la clase que contendrá los comportamientos de los personajes.
-			lbResult = lbResult && cBehaviourManager::Get().Init();
-			if (lbResult)
-			{
-				//Se inicializa Lua.
-				cLuaManager::Get().Init();
-				//Se registran las funciones C++ para usar desde Lua.
-				RegisterLuaFunctions();
-				//Cargamos el fichero de script
-				cLuaManager::Get().DoFile("Data/Scripts/character.lua");
-				cCharacterManager::Get().DebugCharacter();
-				cLuaManager::Get().DoFile("Data/Scripts/patrol.lua");
-			}
-
-			//Se inicializa la clase cInputManager que representa el gestor de entrada (keyboard, gamepad, mouse, ...).
-			//Se le pasa la tabla "kaActionMapping" (de InputConfiguration.cpp) que indica la relación entre las acciones y los dispositivos.
-			//También se pasa "eIA_Count" (de InputConfiguration.h) que indica cuantas acciones de entrada hay.
-			cInputManager::Get().Init( kaActionMapping, eIA_Count );
-
-			// Initialization of physics object 
-			cPhysics::Get().Init();
-
 			//Se inicializa la clase que gestiona la texturas indicando que habrá 1, por ejemplo.
-			cTextureManager::Get().Init(50);
+			cTextureManager::Get().Init(60);
 
-			// Terrain object
-			mHeightmap.Load();
-			// Mundo del terreno
-//			World::Get().Init();
-			// Texturas del mapa de altura
-//			HeightmapTexture::Get().Init();
-			// Entidad abstracta para el terreno
-//			mEntity.Init();
+			mMad_drive_loading = cTextureManager::Get().LoadResource( "Mad_drive_loading", "Data/Scene/images/hud/mad_drive_loading.png" );
+			mMad_drive = cTextureManager::Get().LoadResource( "Mad_drive", "Data/Scene/images/hud/mad_drive.png" );
+			mLoading = cTextureManager::Get().LoadResource( "Loading", "Data/Scene/images/hud/loading.png" );
 
-			//Se inicializa la clase que gestiona los materiales.
-			cMaterialManager::Get().Init(30);
+			Load2DCameraProperties();
 
-			// Init of effects management
-			cEffectManager::Get().Init(20);
+			cGraphicManager::Get().ActivateCamera( &m2DCamera );
 
-			//Init Camera 2D, para las cadenas de texto.
-			//Se inicializa la cámara 2D con una perspectiva ortogonal.
-			//El (0,0) está situado en el centro de la pantalla y las dimensiones están 
-			// establecidas en píxeles.
-			float lfRight = (float)mProperties.muiWidth / 2.0f;
-			float lfLeft = -lfRight;
-			float lfTop = (float)mProperties.muiHeight / 2.0f;
-			float lfBottom = -lfTop;
-			m2DCamera.Init();
-			m2DCamera.SetOrtho(lfLeft, lfRight, lfBottom, lfTop, 0.1f, 100.0f);
-			//Se pone la cámara2D en la posición (0,0) de nuestro mundo,
-			// apuntando al origen del mismo, e indicando que el vector UP de la cámara apunta hacia arriba.
-			m2DCamera.SetLookAt( cVec3(0.0f, 0.0f, 1.f), cVec3(0.0f, 0.f, 0.f), cVec3(0.0f, 1.f, 0.f) );
+			RenderProgress(0.1f);
 
-			// Init the Font.
-			//mFont.Init("./Data/Fonts/Test1.fnt");
-			mFont.Init("./Data/Fonts/font2.fnt");
+			Load3DCameraProperties();
 
-			//Se inicializa el gestor de mallas: habrá 4 mallas en la escena (mirar ./Data/Scene/) + Skeletal mesh.
-			cMeshManager::Get().Init(30);
+			RenderProgress(0.2f);
 
-			//Se inicializa el gestor de escenas.
-			cSceneManager::Get().Init(30);   
+			LoadIAProperties();
+
+			LoadManagerProperties();
+
+			RenderProgress(0.3f);
 
 			//Se carga la escena.
 			//mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/dragonsmall.DAE" ); 		
@@ -616,36 +858,22 @@ bool cGame::LoadResources( void )
 //			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/mad_drive_escombros_matorral.dae" ); 
 //			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/mad_drive_escombros_palmera.dae" ); 
 //			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/mad_drive_escombros_tronco.dae" ); 
-			mMusExt = cSceneManager::Get().LoadResource( "Mustang_exterior", "./Data/Scene/mustang_exterior1.dae" ); 			
-			mMusInt = cSceneManager::Get().LoadResource( "Mustang_interior", "./Data/Scene/mustang_interior.dae" ); 
-			mMusMet = cSceneManager::Get().LoadResource( "Mustang_metralleta", "./Data/Scene/mustang_metralleta.dae" ); 
 
-			mMustangExtDes = cSceneManager::Get().LoadResource( "Mustang_exterior_des", "./Data/Scene/mustang_destruido_exterior.dae" ); 			
-			mMustangIntDes = cSceneManager::Get().LoadResource( "Mustang_interior_des", "./Data/Scene/mustang_destruido_interior.dae" ); 
+			LoadVehicles();
 
-			mMusNeu = cSceneManager::Get().LoadResource( "Mustang_neumatico", "./Data/Scene/mustang_neumatico.dae" ); 
-			mTruckNeu = cSceneManager::Get().LoadResource( "Truck_neumatico", "./Data/Scene/enemigo1_rueda.dae" );
-			mTruckArm = cSceneManager::Get().LoadResource( "Truck_arma", "./Data/Scene/enemigo1_arma.dae" );
-			mTruckExt = cSceneManager::Get().LoadResource( "Truck_exterior", "./Data/Scene/enemigo1_exterior.dae" );
-			mWeaponMuzzle1 = cTextureManager::Get().LoadResource( "Weapon_muzzle1", "Data/Scene/images/flash_disparo/muzzle_flash_1.jpg" ); 
-			mWeaponMuzzle2 = cTextureManager::Get().LoadResource( "Weapon_muzzle2", "Data/Scene/images/flash_disparo/muzzle_flash_2.jpg" );
-			mWeaponMuzzle3 = cTextureManager::Get().LoadResource( "Weapon_muzzle3", "Data/Scene/images/flash_disparo/muzzle_flash_3.jpg" );
-			mArrowEnemy = cTextureManager::Get().LoadResource( "Arrow_enemy", "Data/Scene/images/hud/enemy_arrow.jpg" );
-			mPositiveAmmunition = cTextureManager::Get().LoadResource( "Positive_ammunition", "Data/Scene/images/hud/icono_municion_positiva.png" );
+			RenderProgress(0.5f);
 
-			mTruckExtDes = cSceneManager::Get().LoadResource( "Truck_exterior_destruido", "./Data/Scene/enemigo1_destruido_exterior.dae" ); 			
-			mTruckWeaDes = cSceneManager::Get().LoadResource( "Truck_arma_destruido", "./Data/Scene/enemigo1_destruido_arma.dae" ); 
+			LoadHUD();
 
-			mExplosion_sprite = cTextureManager::Get().LoadResource( "Explosion_sprite", "./Data/Scene/images/explosion/explosion_sprite1.tga" ); 
-			mExplosion_sprite1 = cTextureManager::Get().LoadResource( "Explosion_sprite1", "Data/Scene/images/explosion/texture_explosion1.tga" ); 
+			RenderProgress(0.6f);
 
-			mParticle = cTextureManager::Get().LoadResource( "Particle_system", "Data/Scene/images/sist_particulas/fog_text.png" );
+			LoadEffects();
 
-			mRuinModel = cSceneManager::Get().LoadResource( "Ruina", "./Data/Scene/mad_drive_escombros_ruina.dae" ); 
-			mBushTexture = cTextureManager::Get().LoadResource( "Matorral", "./Data/Scene/images/matorral/matorral_1.png" );
-			mBushTextureMask = cTextureManager::Get().LoadResource( "Matorral_mask", "./Data/Scene/images/matorral/matorral_mask.png" );
+			RenderProgress(0.7f);
 
-			mCrosshair = cTextureManager::Get().LoadResource( "Mirilla", "./Data/Scene/images/mirilla/crosshair.png" );
+			LoadObstacles();
+
+			RenderProgress(0.85f);
 
 //			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo2_exterior.dae" );
 //			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo2.dae" );
@@ -653,7 +881,6 @@ bool cGame::LoadResources( void )
 //			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/enemigo2_rueda.dae" );
 //		    mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/mad_drive_escombros_ruina.dae" );
 //			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/combustible.dae" );
-			mItemCongelacion = cSceneManager::Get().LoadResource( "Item_congelacion", "./Data/Scene/especial_congelacion.dae" );
 //			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/especial_invencibilidad.dae" );
 //			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/especial_superturbo.dae" );
 //			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/municion.dae" );
@@ -673,11 +900,9 @@ bool cGame::LoadResources( void )
 
 //			mScene = cSceneManager::Get().LoadResource( "TestLevel", "./Data/Scene/plane.DAE" );
 
-			// Physics object in the game
-			mModelObject = *((cPhysicObject*) ((cScene *)mItemCongelacion.GetResource())->getSubObject( 0 ));
 			//cPhysicObject mModelObject = *((cPhysicObject*) ((cScene *)mScene.GetResource())->getSubObject( 1 ));
 
-			cSkeletalManager::Get().Init(5);
+
 			// Inits skeleton model
 			//cSkeletalManager::Get().LoadResource("Skeleton", "./Data/Skeletal/SkeletonModel.xml");
 		
@@ -699,25 +924,11 @@ bool cGame::LoadResources( void )
 			lScaleMatrix.LoadScale(0.01f);
 			mObject.SetScaleMatrix( lScaleMatrix );*/
 
-			// Inicializacion del vehiculo (Mustang)
-			mTire = *((cObject*) ((cScene *)mMusNeu.GetResource())->getSubObject(0));
-			mExt = *((cObject*) ((cScene *)mMusExt.GetResource())->getSubObject(0));
-			mInt = *((cObject*) ((cScene *)mMusInt.GetResource())->getSubObject(0));
-			mMet = *((cObject*) ((cScene *)mMusMet.GetResource())->getSubObject(0));
+			LoadObjects();
 
-			mMustangExteriorDes = *((cObject*) ((cScene *)mMustangExtDes.GetResource())->getSubObject(0));
-			mMustangInteriorDes = *((cObject*) ((cScene *)mMustangIntDes.GetResource())->getSubObject(0));
-
-			mTruckExterior = *((cObject*) ((cScene *)mTruckExt.GetResource())->getSubObject(0));
-			mTruckWea = *((cObject*) ((cScene *)mTruckArm.GetResource())->getSubObject(0));
-			mTruckTire = *((cObject*) ((cScene *)mTruckNeu.GetResource())->getSubObject(0));
-			mTruckExteriorDes = *((cObject*) ((cScene *)mTruckExtDes.GetResource())->getSubObject(0));
-			mTruckWeaponDes = *((cObject*) ((cScene *)mTruckWeaDes.GetResource())->getSubObject(0));
-
-			mRuinObs = *((cObject*) ((cScene *)mRuinModel.GetResource())->getSubObject(0));
+			RenderProgress(1.0f);
 			
-			// Inicializa skybox
-			mSkybox.Init();
+			LoadWorld();
 
 		} else {
 			//Si algo falla se libera la ventana.

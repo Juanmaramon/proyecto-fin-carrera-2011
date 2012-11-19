@@ -40,7 +40,7 @@ void Truck::Init(cVec3 ini_pos, cObject* truckExterior, cObject* truckWeapon, cO
 	mVehicle.m_carChassis->setUserPointer(this);
 
 	// Contador de vidas
-	miCurrentLives = 250;
+	miCurrentLives = miMaxLives = 250;
 
 	// Texturas de fogonazo arma
 	mWeaponMuzzle1 = weapon_muzzle1;
@@ -55,6 +55,11 @@ void Truck::Init(cVec3 ini_pos, cObject* truckExterior, cObject* truckWeapon, cO
 	mExplosion.Init(explosion_sprite, explosion_sprite1, weapon_muzzle1, particle_texture);
 
 	mState = eREADY;
+
+	// Inicialmente no recibe daño
+	mbDamaged = false;
+	// Contador para actualizar estado dañado
+	miStepsDamaged = 0;
 }
 
 void Truck::MoveForward(float lfTimestep){
@@ -282,7 +287,7 @@ void Truck::Update(float lfTimestep){
 				if (lpBodyPtr != NULL) {
 					sprintf(buff1, "Hit! Hit!\n");
 					OutputDebugStr(buff1);
-					lpBodyPtr->Damage();
+					//lpBodyPtr->Damage();
 				}
 				else {
 					sprintf(buff1, "\n\n\n");
@@ -342,14 +347,14 @@ void Truck::Update(float lfTimestep){
 					sprintf(buff1, "Hit! Hit!\n");
 					//OutputDebugStr(buff1);
 					lpBodyPtr->Damage();
+					lpBodyPtr->GettingDamage(true);
 				}
 				else {
 					sprintf(buff1, "\n\n\n");
-					OutputDebugStr(buff1);
+					//OutputDebugStr(buff1);
 				}
 			}
 		}
-
 
 		//mBullets.Create(lvStart, lvHit, lfyaw);
 	}
@@ -412,6 +417,8 @@ void Truck::Render(){
 		// Si su objetivo esta vivo
 		if (cGame::Get().GetMustang().IsAlive())
 			RenderMuzzle();
+
+		RenderHUD();
 
 		glEnable (GL_FOG);
 
@@ -580,4 +587,62 @@ void Truck::RenderMuzzle() {
 
 	}
 
+}
+
+void Truck::RenderHUD() {
+
+	if (IsAlive()) {
+
+		if (!mbDamaged) {
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_DST_COLOR, GL_ONE);
+		}
+
+		cVec3 lvHUDPos, lvHUDPosBright;
+		TransformPoint( lvHUDPos, cVec3(-15.0f, 26.0f, 0.0f ), mTruckWea->GetWorldMatrix() );
+		TransformPoint( lvHUDPosBright, cVec3(-15.0f, 22.0f, 0.0f ), mTruckWea->GetWorldMatrix() );
+
+		cMatrix lmBillboardMatrix;
+		lmBillboardMatrix.LoadTranslation(lvHUDPos);
+		cGraphicManager::Get().SetWorldMatrix(lmBillboardMatrix);
+
+		// Se aplica el billboard para ignorar la rotacion y orientar el quad a la camara
+		cGraphicManager::Get().BillboardCheatSphericalBegin();
+
+		glColor4f (1.f, 1.f, 1.f, 1.f);
+		
+		// Health Bar
+
+		float lfPercentLives = (float)miCurrentLives / (float)miMaxLives;
+
+		float lfRedComponent = (float)1.f - lfPercentLives;
+
+		glDisable(GL_TEXTURE_2D);
+			cGraphicManager::Get().DrawRect(0.f, 0.f, lfPercentLives * 2.5f, 0.15f, cVec3(lfRedComponent, lfPercentLives, 0.f));
+
+		glEnable(GL_TEXTURE_2D);
+
+		cGraphicManager::Get().SetWorldMatrix(lmBillboardMatrix.LoadIdentity());
+
+		cGraphicManager::Get().BillboardEnd();
+
+		if (!mbDamaged)
+			glDisable(GL_BLEND);
+
+		glColor4f (1.f, 1.f, 1.f, 1.f);
+
+	}
+
+}
+
+void Truck::GettingDamage(bool lbDamage) {
+	// Si esta en estado dañado esperar 200 frames para actualizar
+	if (mbDamaged) {
+		if (miStepsDamaged == 200) {
+			miStepsDamaged = 0;
+			mbDamaged = lbDamage;
+		} else
+			miStepsDamaged++;
+	} else
+		mbDamaged = lbDamage;
 }

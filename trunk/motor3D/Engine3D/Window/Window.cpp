@@ -1,5 +1,7 @@
 #include "Window.h"
 
+//icon ICON "crosshair.bmp"
+
 //Esta función se encargará de crear la ventana con los parámetros que recibe.
 bool cWindow :: Init( cApplicationProperties &lProperties )
 {
@@ -47,6 +49,17 @@ bool cWindow :: Init( cApplicationProperties &lProperties )
 	// El atributo “hIcon” establece el icono de la ventana. 
     //  Se configura el valor por defecto:
 	lWndClass.hIcon = LoadIcon(NULL, IDI_WINLOGO);
+	//lWndClass.hIcon = LoadIcon(NULL, MAKEINTRESOURCE(IDI_ERROR));
+	
+	char lsBigIcon[MAXPATH+1];
+	char lsSmallIcon[MAXPATH+1];
+	_getcwd(lsBigIcon, MAXPATH+1);													// Full Path To Icon
+	_getcwd(lsSmallIcon, MAXPATH+1);												// Full Path To Icon
+	strcat(lsBigIcon, "\\Window\\crosshair32.ico");								
+	strcat(lsSmallIcon, "\\Window\\crosshair.ico");									// Append The PathName
+
+	HANDLE icon_small = LoadImage(mInstance, lsSmallIcon, IMAGE_ICON, 16, 16, LR_LOADFROMFILE);
+	HANDLE icon_big = LoadImage(mInstance, lsBigIcon, IMAGE_ICON, 32, 32, LR_LOADFROMFILE);
 
 	//Load The Arrow Pointer.
 	// El atributo “hCursor” establece el icono que usara el cursor.
@@ -200,7 +213,9 @@ bool cWindow :: Init( cApplicationProperties &lProperties )
 	ShowWindow(mWnd,SW_SHOW);    
 	SetForegroundWindow(mWnd);
 	SetFocus(mWnd);
-
+	// Envia mensaje para cambiar el icono de la ventana
+	SendMessage(mWnd, (UINT)WM_SETICON, ICON_SMALL, (LPARAM)icon_small);
+	SendMessage(mWnd, (UINT)WM_SETICON, ICON_BIG, (LPARAM)icon_big);
 	
 	//5)
 	//Se accede al contexto del dispositivo de la ventana que se acaba de crear:

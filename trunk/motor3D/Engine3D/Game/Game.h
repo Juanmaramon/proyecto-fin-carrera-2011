@@ -8,6 +8,7 @@
 #include "..\Gameplay\Object\Object.h"
 #include "..\Physics\cPhysics.h"
 #include "..\Physics\cPhysicObject.h"
+#include "../Graphics/Textures/Texture.h"
 
 #include "..\Gameplay\CharacterPos\CharacterPos.h"
 #include "..\Graphics\GodCamera.h"
@@ -90,6 +91,8 @@ protected:
 
 		cResourceHandle mItemCongelacion;
 
+		cResourceHandle mMad_drive_loading, mMad_drive, mLoading;
+
 		// Instance that manages skeletal animation part of the engine
 		cResourceHandle mSkeletalMesh;
 		// Bullet physics object
@@ -109,11 +112,18 @@ protected:
 		// Skybox
 		Skybox mSkybox;
 		// Weapon muzzle y distintas texturas del HUD
-		cResourceHandle mWeaponMuzzle1, mWeaponMuzzle2, mWeaponMuzzle3, mArrowEnemy, mPositiveAmmunition, mExplosion_sprite, mExplosion_sprite1, mParticle;
+		cResourceHandle mWeaponMuzzle1, mWeaponMuzzle2, mWeaponMuzzle3, 
+			mArrowEnemy, mPositiveAmmunition, mNegativeAmmunition,
+			mPositivelive, mNegativelive, mExplosion_sprite, 
+			mExplosion_sprite1, mParticle, mhud1, mhud1_mask;
 		// Contador para efecto de niebla variable
 		int miFogStep;
 		float mfFogDensity;
 		bool mbFogIncreasing;
+
+		// State de la barra de progreso para la carga de recursos del juego
+		int State;
+
 public:
 	
 	//Función para inicializar el juego	
@@ -133,6 +143,18 @@ public:
 
 	//Función para cargar los recursos necesarios para el juego.
 	bool LoadResources( void );
+
+	bool LoadWindowProperties( void );
+	bool Load3DCameraProperties( void );
+	bool Load2DCameraProperties( void );
+	bool LoadIAProperties( void );
+	bool LoadManagerProperties( void );
+	bool LoadVehicles( void );
+	bool LoadHUD( void );
+	bool LoadEffects( void );
+	bool LoadObstacles( void );
+	bool LoadObjects( void );
+	bool LoadWorld( void );
 
 	// Time since application start
 	inline float GetAcumulatedTime() { return mfAcTime; }	
@@ -162,6 +184,15 @@ public:
 	
 	unsigned int GetGameWidth() { return mProperties.muiWidth; }
 	unsigned int GetGameHeight() { return mProperties.muiHeight; }
+
+	// Renderiza la barra de progreso de carga
+	void RenderProgressBar( float progress);
+	void RenderTitleLoad ( float progress );
+	void RenderProgress( float progress);
+
+	// Inicializa si esta dañado o no los vehiculos
+	void InitDamageStates();
+
 };
 
 #endif

@@ -211,12 +211,14 @@ void Skybox::Init(){
 void Skybox::Render(){
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+    //glBlendFunc(GL_SRC_ALPHA,GL_ONE);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	//glColor4d (.75f,.75f,.75f,1);
 	glColor4d(2,2,2,1.f);
 	//glColor3f(1.f, 1.f, 1.f);
-   // CreateSkyBox(0, 5, 0, 2390, 2200, 2390);   // Render Inner Layer
-	 CreateSkyBox(0, 5, 0, 3072, 2200, 3072);   // Render Inner Layer
-	glDisable(GL_BLEND);
+    //CreateSkyBox(0, 5, 0, 2390, 2200, 2390);   // Render Inner Layer
+	 //CreateSkyBox(0, 5, 0, 3072, 2200, 3072);   // Render Inner Layer
+	 CreateSkyBox(0, 5, 0, 3072, 3072, 3072);   // Render Inner Layer
+	 //CreateSkyBox(0, 5, 0, 2980, 2980, 2980);   // Render Inner Layer
+	 glDisable(GL_BLEND);
 }
