@@ -142,6 +142,24 @@ void cGraphicManager::DrawPoint( const cVec3 &lvPosition, const cVec3 &lvColor )
    glEnable(GL_TEXTURE_2D);
 }
 
+void cGraphicManager::DrawRect( const float lfX, const float lfY, const float lfWidth, const float lfHeight, const cVec3 &lvColor )
+{
+   //Antes de pintar las primitivas se desactivan el uso de texturas y después se vuelve a activar, 
+   //esto se hace para asegurarnos de que el uso de texturas no impide el renderizado de estas primitivas. 	
+   glDisable(GL_TEXTURE_2D);
+	
+   glColor3f (lvColor.x, lvColor.y, lvColor.z);
+   glBegin(GL_QUADS);
+	glVertex2f(lfX, lfY);
+	glVertex2f(lfX + lfWidth, lfY);
+	glVertex2f(lfX + lfWidth, lfY + lfHeight);
+	glVertex2f(lfX, lfY + lfHeight);
+   glEnd ();
+   glColor3f (1.f, 1.f, 1.f);
+
+   glEnable(GL_TEXTURE_2D);
+}
+
 //Función para renderizar una esfera en el espacio.
 //El primer parámetro es la posición donde 
 // se renderizará el punto y el segundo parámetro será el color representado por RGB 

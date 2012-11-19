@@ -27,6 +27,8 @@ class cGraphicManager : public cSingleton<cGraphicManager>
 	  // entre 0.0 y 1.0.
 	  void DrawPoint( const cVec3 &lvPosition, const cVec3 &lvColor );
 
+	  void DrawRect( const float lfX, const float lfY, const float lfWidth, const float lfHeight, const cVec3 &lvColor );
+
 	  void DrawSphere( const cVec3 &lvPosition, const cVec3 &lvColor, float alpha = 1.0f );
 
 	  //Función para rederizar una línea.

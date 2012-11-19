@@ -11,16 +11,19 @@
 
 #define WEAPON_RANGE 100000.f
 #define FRAME_DELAY 4
+#define MAX_LIVES 300
+#define MAX_AMMO 1500
 
 class Mustang{
 
 public:
 	void Init(cObject* mustangExterior, cObject* mustangInterior, cObject* mustangWeapon, cObject* mustangTires, 
 			  cResourceHandle* weapon_muzzle1, cResourceHandle* weapon_muzzle2, cResourceHandle* weapon_muzzle3, 
-			  cResourceHandle* arrow_enemy, cResourceHandle* mPositiveAmmunition, cObject* mustangExteriorDestroyed,
+			  cResourceHandle* arrow_enemy, cResourceHandle* mPositiveAmmunition, cResourceHandle* mNegativeAmmunition, cObject* mustangExteriorDestroyed,
 				   cObject* mustangInteriorDestroyed, cResourceHandle* explosion_sprite,
 				 cResourceHandle* explosion_sprite1, cResourceHandle* particle_texture,
-				 cResourceHandle* crosshair);
+				 cResourceHandle* crosshair, cResourceHandle* hud1, cResourceHandle* hud1_mask,
+				 cResourceHandle* mPositiveLive, cResourceHandle* mNegativelive);
 	void Deinit();
 	void MoveForward(float lfTimestep);
 	void Break(float lfTimestep);
@@ -36,6 +39,11 @@ public:
 	void Damage();
 	int GetCurrentLives() { return miCurrentLives; };
 	void Crosshair();
+	// Decrementa el contador de balas
+	void AmmoFired();
+	// Recibiendo daño del enemigo
+	void GettingDamage(bool lbDamage);
+
 private: 
 	void RenderRayGun ();
 
@@ -61,11 +69,22 @@ private:
 	cResourceHandle* mWeaponMuzzle3;
 	cResourceHandle* mArrowEnemy;
 	cResourceHandle* mPosAmmu;
+	cResourceHandle* mNegAmmu;
+	cResourceHandle* mPosLive;
+	cResourceHandle* mNegLive;
+	cResourceHandle* mHud1;
+	cResourceHandle* mHud1_mask;
 	// Secuencia de animacion de fogonazo
 	int miFlashSeq;
 	float mfEnemyArrow;
 	// Contador de vidas
 	int miCurrentLives;
+	int miMaxLives;
+	// Contador de balas
+	int miCurrentAmmo;
+	int miMaxAmmo;
+	// True si se acabo la municion
+	bool mAmmoOver;
 
 	cObject* mMusExtDes, *mMusIntDes; 
 
@@ -79,6 +98,12 @@ private:
 	cResourceHandle* mCrosshair;
 	float mYaw, mPitch, mCHRotationCount;
 
+	// Recibiendo daño del enemigo
+	bool mbDamaged;
+	// Contador para actualizar estado dañado y disparando
+	int miStepsDamaged, miStepsFired;
+	// Si se esta disparando
+	bool mbAmmoFired;
 };
 
 #endif

@@ -4,9 +4,14 @@
 #define Window_H
 
 #include <Windows.h>
+#include <direct.h>
 
 #include "..\Utility\Singleton.h" 
 #include "ApplicationProperties.h"
+
+#define ICON_SMALL 0
+#define ICON_BIG   1
+#define MAXPATH	300
 
 //Por sencillez, asumiremos que nuestro juego tiene una sóla ventana,
 // por lo que la clase cWindow será un singleton.

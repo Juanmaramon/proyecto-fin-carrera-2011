@@ -27,6 +27,9 @@ public:
 	void Damage();
 	void RenderMuzzle();
 	void RenderRayGun ();
+	void RenderHUD();
+	// Recibiendo daño del enemigo (mantiene el estado unos segundos)
+	void GettingDamage(bool lbDamage);
 
 private: 
 	// Modelo físico del vehiculo 
@@ -40,8 +43,8 @@ private:
 	cMatrix mScaleMatrix, lScaleMatrixChasis;
 	std::vector<cObject> maTires;
 	float mvPreviousYaw;
-	// Contandor de vidas
-	int miCurrentLives;
+	// Contandor de vidas y vidas maximas
+	int miCurrentLives, miMaxLives;
 	// Estado del enemigo
 	eStates mState;
 
@@ -59,6 +62,11 @@ private:
 
 	// Explosion
 	Explosion mExplosion;
+
+	// Recibiendo daño del enemigo
+	bool mbDamaged;
+	// Contador para actualizar estado dañado
+	int miStepsDamaged;
 
 };
 
